@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Ram Naam"/>
+<meta name="theme-color" content="#1a0a00"/>
+<title>Ram Naam Counter – Digital Mala</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg"/>
+<link rel="alternate icon" type="image/png" sizes="192x192" href="./icon-192.png"/>
+<link rel="manifest" href="./manifest.json"/>
+<link rel="apple-touch-icon" href="./icon-192.png"/>
+<style>
+  /* ── Design tokens ─────────────────────────────────────────
+     Palette  : deep saffron night (#1a0a00) + kumkum (#d4380d)
+                + marigold (#f5a623) + cream ivory (#fdf6e3)
+     Type     : 'Tiro Devanagari Sanskrit' for the mantra (devotional,
+                script-adjacent), 'DM Sans' for UI (clean, round, legible)
+     Signature: the "mala bead" progress ring that fills with each tap
+  ──────────────────────────────────────────────────────────── */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #1a0a00;
+    --bg2:       #2b1200;
+    --kumkum:    #d4380d;
+    --marigold:  #f5a623;
+    --ivory:     #fdf6e3;
+    --muted:     #b08060;
+    --ring-bg:   rgba(245,166,35,.15);
+    --r:         160px;   /* mala ring radius */
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--ivory);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    user-select: none;
+    overflow: hidden;
+  }
+
+  /* ── Layout ── */
+  #app {
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    max-width: 430px; margin: 0 auto;
+    padding: env(safe-area-inset-top, 12px) 0 env(safe-area-inset-bottom, 12px);
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 6px;
+  }
+  .app-title {
+    font-size: 13px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--marigold);
+  }
+  .session-badge {
+    font-size: 12px; color: var(--muted);
+    background: var(--bg2); border-radius: 20px;
+    padding: 4px 10px;
+  }
+
+  /* ── Goal strip ── */
+  #goal-strip {
+    padding: 6px 20px 4px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .goal-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .goal-bar-wrap {
+    flex: 1; height: 4px; background: var(--bg2); border-radius: 99px; overflow: hidden;
+  }
+  .goal-bar {
+    height: 100%; background: var(--marigold);
+    border-radius: 99px; transition: width .3s ease;
+  }
+  .goal-pct { font-size: 12px; color: var(--marigold); flex-shrink: 0; min-width: 32px; text-align: right; }
+
+  /* ── Main tap area ── */
+  #center {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 0;
+  }
+
+  /* Mala ring SVG */
+  #mala-ring-wrap {
+    position: relative; width: 300px; height: 300px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #mala-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  #ring-track { fill: none; stroke: var(--ring-bg); stroke-width: 10; }
+  #ring-fill  {
+    fill: none; stroke: var(--marigold); stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: stroke-dashoffset .25s ease, stroke .25s;
+    filter: drop-shadow(0 0 6px #f5a62399);
+  }
+
+  /* Tap button */
+  #tap-btn {
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #3d1c00 0%, #1a0a00 70%);
+    border: 2px solid #3d1c00;
+    box-shadow:
+      0 0 0 1px #f5a62322,
+      0 12px 40px #00000088,
+      inset 0 1px 0 #ffffff11;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    transition: transform .08s ease, box-shadow .08s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative; z-index: 2;
+  }
+  #tap-btn:active {
+    transform: scale(.93);
+    box-shadow: 0 0 0 1px #f5a62355, 0 6px 20px #00000099, inset 0 2px 6px #00000066;
+  }
+  .mantra-text {
+    font-family: serif;
+    font-size: 32px; line-height: 1; color: var(--marigold);
+    text-shadow: 0 0 20px #f5a62366;
+  }
+  .tap-hint {
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Big count ── */
+  #count-display {
+    text-align: center; margin-top: 20px;
+  }
+  #count-number {
+    font-size: 64px; font-weight: 700; line-height: 1;
+    color: var(--ivory);
+    font-variant-numeric: tabular-nums;
+    transition: transform .1s ease;
+  }
+  #count-number.pop { transform: scale(1.12); }
+  #count-label {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin-top: 4px;
+  }
+
+  /* ── Mala count (108 cycle) ── */
+  #mala-count {
+    font-size: 13px; color: var(--muted); margin-top: 6px;
+  }
+  #mala-count span { color: var(--marigold); font-weight: 600; }
+
+  /* ── Bottom stats row ── */
+  #stats-row {
+    display: flex; align-items: stretch;
+    margin: 0 16px; gap: 10px;
+    padding-bottom: 6px;
+  }
+  .stat-card {
+    flex: 1; background: var(--bg2); border-radius: 14px;
+    padding: 12px 10px; text-align: center;
+  }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--ivory); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .05em; }
+
+  /* ── Action bar ── */
+  #action-bar {
+    display: flex; gap: 10px; padding: 10px 16px 6px;
+  }
+  .action-btn {
+    flex: 1; padding: 13px 0; border-radius: 14px; border: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    letter-spacing: .04em; transition: opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn:active { opacity: .7; }
+  #btn-reset { background: var(--bg2); color: var(--muted); }
+  #btn-goal  { background: var(--kumkum); color: var(--ivory); }
+
+  /* ── Ripple ── */
+  .ripple {
+    position: fixed; border-radius: 50%;
+    background: radial-gradient(circle, #f5a62355 0%, transparent 70%);
+    pointer-events: none; transform: scale(0);
+    animation: ripple-anim .5s ease-out forwards;
+  }
+  @keyframes ripple-anim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ── Milestone toast ── */
+  #toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--marigold); color: #1a0a00;
+    font-weight: 700; font-size: 14px; letter-spacing: .06em;
+    padding: 10px 22px; border-radius: 99px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s, transform .3s;
+    white-space: nowrap; z-index: 999;
+  }
+  #toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Goal modal ── */
+  #modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); z-index: 100;
+    align-items: flex-end; justify-content: center;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal {
+    background: var(--bg2); border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px; width: 100%; max-width: 430px;
+  }
+  #modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .goal-opts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .goal-opt {
+    padding: 10px 18px; border-radius: 99px;
+    border: 1.5px solid #3d1c00; background: transparent;
+    color: var(--ivory); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px; cursor: pointer; transition: all .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .goal-opt:hover, .goal-opt.active {
+    background: var(--marigold); color: #1a0a00; border-color: var(--marigold);
+    font-weight: 600;
+  }
+  #custom-goal-wrap {
+    margin-top: 16px; display: flex; gap: 10px; align-items: center;
+  }
+  #custom-goal-input {
+    flex: 1; background: var(--bg); border: 1.5px solid #3d1c00;
+    border-radius: 12px; color: var(--ivory); font-size: 16px;
+    padding: 10px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; outline: none;
+  }
+  #custom-goal-input:focus { border-color: var(--marigold); }
+  #btn-set-goal {
+    padding: 10px 20px; background: var(--kumkum); color: var(--ivory);
+    border: none; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  #btn-close-modal {
+    margin-top: 20px; width: 100%; padding: 13px;
+    background: transparent; border: 1.5px solid #3d1c00;
+    color: var(--muted); border-radius: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; cursor: pointer;
+  }
+
+  /* ── Offline status & Install ── */
+  .offline-bar {
+    background: #3d1c00;
+    color: var(--marigold);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-align: center;
+    padding: 6px 14px;
+    margin: 4px 16px 6px;
+    border-radius: 99px;
+    border: 1px solid rgba(245, 166, 35, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="app-title">🪔 Ram Naam Counter</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="btn-install" class="hidden" title="Install Ram Naam Counter" style="
+        background:var(--kumkum);color:var(--ivory);border:none;border-radius:20px;
+        padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;line-height:1;
+        -webkit-tap-highlight-color:transparent;
+      ">📲 Install</button>
+      <button id="btn-vibrate" aria-label="Toggle vibration" style="
+        background:var(--bg2);border:none;border-radius:20px;
+        padding:5px 12px;font-size:18px;cursor:pointer;line-height:1;
+        -webkit-tap-highlight-color:transparent;
+      ">📳</button>
+      <button id="btn-sound" aria-label="Toggle sound" style="
+        background:var(--bg2);border:none;border-radius:20px;
+        padding:5px 12px;font-size:18px;cursor:pointer;line-height:1;
+        -webkit-tap-highlight-color:transparent;
+      ">🔊</button>
+      <div class="session-badge" id="session-time">0 min</div>
+    </div>
+  </header>
+
+  <!-- Offline status indicator -->
+  <div id="offline-bar" class="offline-bar hidden">
+    <span>📴 Offline Mode · Chants saved locally</span>
+  </div>
+
+  <!-- Goal strip -->
+  <div id="goal-strip">
+    <div class="goal-label">Goal</div>
+    <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
+    <div class="goal-pct" id="goal-pct">0%</div>
+  </div>
+
+  <!-- Mala ring + tap button -->
+  <div id="center">
+    <div id="mala-ring-wrap">
+      <svg id="mala-svg" viewBox="0 0 300 300">
+        <circle id="ring-track" cx="150" cy="150" r="130"/>
+        <circle id="ring-fill"  cx="150" cy="150" r="130"/>
+      </svg>
+      <button id="tap-btn" aria-label="Tap to count Ram Naam">
+        <div class="mantra-text">राम</div>
+        <div class="tap-hint">Tap to chant</div>
+      </button>
+    </div>
+
+    <div id="count-display">
+      <div id="count-number">0</div>
+      <div id="count-label">Ram Naam</div>
+      <div id="mala-count">Mala <span id="mala-num">0</span> · <span id="bead-num">0</span>/108</div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div id="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-today">0</div>
+      <div class="stat-sub">Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-best">0</div>
+      <div class="stat-sub">Best Day</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-sub">All Time</div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div id="action-bar">
+    <button class="action-btn" id="btn-reset">Reset Session</button>
+    <button class="action-btn" id="btn-goal">Set Goal</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Goal modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>Set Daily Goal</h2>
+    <div class="goal-opts">
+      <button class="goal-opt" data-val="108">108</button>
+      <button class="goal-opt" data-val="216">216</button>
+      <button class="goal-opt" data-val="324">324</button>
+      <button class="goal-opt" data-val="1008">1008</button>
+    </div>
+    <div id="custom-goal-wrap">
+      <input id="custom-goal-input" type="number" placeholder="Custom number" min="1" max="100000"/>
+      <button id="btn-set-goal">Set</button>
+    </div>
+    <button id="btn-close-modal">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────
+const TODAY = new Date().toDateString();
+let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
+  session: 0,
+  todayDate: TODAY,
+  today: 0,
+  best: 0,
+  total: 0,
+  goal: 108,
+  sessionStart: Date.now(),
+};
+// Reset today if date changed
+if (state.todayDate !== TODAY) {
+  if (state.today > state.best) state.best = state.today;
+  state.todayDate = TODAY;
+  state.today = 0;
+}
+state.sessionStart = Date.now();
+
+function save() { localStorage.setItem('ram_state', JSON.stringify(state)); }
+
+// ── DOM refs ─────────────────────────────────────────────────
+const tapBtn      = document.getElementById('tap-btn');
+const countNum    = document.getElementById('count-number');
+const malaN       = document.getElementById('mala-num');
+const beadN       = document.getElementById('bead-num');
+const goalBar     = document.getElementById('goal-bar');
+const goalPct     = document.getElementById('goal-pct');
+const ringFill    = document.getElementById('ring-fill');
+const statToday   = document.getElementById('stat-today');
+const statBest    = document.getElementById('stat-best');
+const statTotal   = document.getElementById('stat-total');
+const sessionTime = document.getElementById('session-time');
+const toast       = document.getElementById('toast');
+
+// ── Mala ring math ───────────────────────────────────────────
+const CIRCUM = 2 * Math.PI * 130; // r=130
+ringFill.style.strokeDasharray = CIRCUM;
+
+function updateRing() {
+  const bead = state.session % 108;
+  const frac = bead / 108;
+  ringFill.style.strokeDashoffset = CIRCUM * (1 - frac);
+  // colour shift: marigold → kumkum near completion
+  const hue = Math.round(36 - frac * 20); // 36°→16°
+  ringFill.style.stroke = `hsl(${hue},91%,55%)`;
+}
+
+function updateUI() {
+  countNum.textContent = state.session.toLocaleString();
+  const malas = Math.floor(state.session / 108);
+  const beads = state.session % 108;
+  malaN.textContent = malas;
+  beadN.textContent = beads;
+
+  const pct = Math.min(100, Math.round((state.today / state.goal) * 100));
+  goalBar.style.width = pct + '%';
+  goalPct.textContent = pct + '%';
+  if (pct >= 100) { goalBar.style.background = '#52c41a'; goalPct.style.color = '#52c41a'; }
+  else            { goalBar.style.background = ''; goalPct.style.color = ''; }
+
+  statToday.textContent = state.today.toLocaleString();
+  statBest.textContent  = Math.max(state.best, state.today).toLocaleString();
+  statTotal.textContent = state.total >= 1000
+    ? (state.total / 1000).toFixed(1) + 'k'
+    : state.total.toLocaleString();
+
+  updateRing();
+}
+
+// ── Session timer ─────────────────────────────────────────────
+setInterval(() => {
+  const mins = Math.floor((Date.now() - state.sessionStart) / 60000);
+  sessionTime.textContent = mins + ' min';
+}, 10000);
+
+// ── Milestone toasts ─────────────────────────────────────────
+const MILESTONES = [108, 216, 324, 432, 540, 1008, 1116];
+let shownMilestones = new Set();
+
+function checkMilestone(n) {
+  for (const m of MILESTONES) {
+    if (n >= m && !shownMilestones.has(m)) {
+      shownMilestones.add(m);
+      showToast(n === m
+        ? `🙏 ${m} Ram Naam! 1 Mala complete`
+        : `🔱 ${m.toLocaleString()} – Jai Shri Ram!`);
+    }
+  }
+  if (n === state.goal) showToast('✨ Goal reached! Jai Ram Ji Ki!');
+}
+
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+// ── Ripple ────────────────────────────────────────────────────
+function spawnRipple(x, y) {
+  const el = document.createElement('div');
+  el.className = 'ripple';
+  const size = 120;
+  el.style.cssText = `left:${x - size/2}px;top:${y - size/2}px;width:${size}px;height:${size}px`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 500);
+}
+
+// ── Vibration toggle ─────────────────────────────────────────
+let vibrateOn = JSON.parse(localStorage.getItem('ram_vibrate') ?? 'false');
+const btnVibrate = document.getElementById('btn-vibrate');
+
+function updateVibrateBtn() {
+  btnVibrate.textContent = vibrateOn ? '📳' : '📴';
+  btnVibrate.title = vibrateOn ? 'Vibration ON – tap to turn off' : 'Vibration OFF – tap to turn on';
+}
+updateVibrateBtn();
+
+btnVibrate.addEventListener('click', () => {
+  vibrateOn = !vibrateOn;
+  localStorage.setItem('ram_vibrate', vibrateOn);
+  updateVibrateBtn();
+  if (vibrateOn && navigator.vibrate) navigator.vibrate(30);
+});
+
+// ── Audio / Sound ─────────────────────────────────────────────
+// ── Web Audio API Engine with HTML5 Audio Fallback ─────────────
+let soundOn = JSON.parse(localStorage.getItem('ram_sound') ?? 'true');
+const btnSound = document.getElementById('btn-sound');
+
+let audioCtx = null;
+let ramBuffer = null;
+const ramAudioFallback = new Audio('./ram.mp3');
+ramAudioFallback.preload = 'auto';
+
+function initAudio() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass && !audioCtx) {
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  } catch (e) {}
+}
+
+// Load audio into memory for 100% offline playback with zero latency
+fetch('./ram.mp3')
+  .then(res => res.arrayBuffer())
+  .then(arrayBuffer => {
+    initAudio();
+    if (audioCtx) {
+      audioCtx.decodeAudioData(arrayBuffer, buffer => {
+        ramBuffer = buffer;
+      }, () => {});
+    }
+  })
+  .catch(() => {});
+
+function updateSoundBtn() {
+  btnSound.textContent = soundOn ? '🔊' : '🔇';
+  btnSound.title = soundOn ? 'Sound ON – tap to mute' : 'Sound OFF – tap to unmute';
+}
+updateSoundBtn();
+
+btnSound.addEventListener('click', () => {
+  soundOn = !soundOn;
+  localStorage.setItem('ram_sound', soundOn);
+  updateSoundBtn();
+  initAudio();
+});
+
+function playRam() {
+  if (!soundOn) return;
+  initAudio();
+
+  // Primary: Web Audio API (instantaneous, offline-safe, multi-tap polyphonic)
+  if (audioCtx && ramBuffer) {
+    try {
+      const source = audioCtx.createBufferSource();
+      source.buffer = ramBuffer;
+      source.connect(audioCtx.destination);
+      source.start(0);
+      return;
+    } catch (e) {}
+  }
+
+  // Secondary fallback: HTMLMediaElement
+  try {
+    const clip = ramAudioFallback.cloneNode();
+    clip.volume = 1;
+    clip.play().catch(() => {});
+  } catch (e) {}
+}
+
+// ── Tap handler ───────────────────────────────────────────────
+function handleTap(e) {
+  if (vibrateOn && navigator.vibrate) navigator.vibrate(18);
+
+  initAudio();
+  playRam();
+
+  state.session++;
+  state.today++;
+  state.total++;
+
+  // pop animation
+  countNum.classList.remove('pop');
+  void countNum.offsetWidth;
+  countNum.classList.add('pop');
+  setTimeout(() => countNum.classList.remove('pop'), 100);
+
+  const rect = tapBtn.getBoundingClientRect();
+  spawnRipple(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+  checkMilestone(state.session);
+  updateUI();
+  save();
+}
+
+tapBtn.addEventListener('click', handleTap);
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    initAudio();
+    handleTap();
+  }
+});
+
+// ── Reset session ─────────────────────────────────────────────
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Reset this session counter? (Your all-time stats are safe)')) return;
+  state.session = 0;
+  state.sessionStart = Date.now();
+  shownMilestones.clear();
+  updateUI(); save();
+});
+
+// ── Goal modal ────────────────────────────────────────────────
+const overlay = document.getElementById('modal-overlay');
+document.getElementById('btn-goal').addEventListener('click', () => overlay.classList.add('open'));
+document.getElementById('btn-close-modal').addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+document.querySelectorAll('.goal-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.goal = parseInt(btn.dataset.val);
+    save(); updateUI(); overlay.classList.remove('open');
+    showToast(`Goal set to ${state.goal.toLocaleString()} 🎯`);
+  });
+});
+
+document.getElementById('btn-set-goal').addEventListener('click', () => {
+  const v = parseInt(document.getElementById('custom-goal-input').value);
+  if (!v || v < 1) return;
+  state.goal = v;
+  save(); updateUI(); overlay.classList.remove('open');
+  showToast(`Goal set to ${state.goal.toLocaleString()} 🎯`);
+});
+
+// ── Init ──────────────────────────────────────────────────────
+updateUI();
+
+// ── Service Worker & Offline Experience ───────────────────────
+const offlineBar = document.getElementById('offline-bar');
+
+function updateOnlineStatus() {
+  if (navigator.onLine) {
+    offlineBar.classList.add('hidden');
+  } else {
+    offlineBar.classList.remove('hidden');
+  }
+}
+
+window.addEventListener('online', () => {
+  updateOnlineStatus();
+  showToast('🌐 Back online');
+});
+window.addEventListener('offline', () => {
+  updateOnlineStatus();
+  showToast('📴 You are offline · Chanting saved locally');
+});
+updateOnlineStatus();
+
+// PWA Install Prompt handling
+let deferredInstallPrompt = null;
+const btnInstall = document.getElementById('btn-install');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (btnInstall) btnInstall.classList.remove('hidden');
+});
+
+if (btnInstall) {
+  btnInstall.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      btnInstall.classList.add('hidden');
+      showToast('🙏 Ram Naam Counter installed!');
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  if (btnInstall) btnInstall.classList.add('hidden');
+  deferredInstallPrompt = null;
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  showToast('✨ App updated to latest version!');
+                } else {
+                  showToast('🙏 Ready for offline chanting!');
+                }
+              }
+            });
+          }
+        });
+      })
+      .catch(err => {
+        console.warn('SW registration failed:', err);
+      });
+  });
+}
+</script>
+</body>
+</html>
