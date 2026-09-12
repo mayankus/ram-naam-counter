@@ -454,7 +454,7 @@
     <div id="count-display">
       <div id="count-number">0</div>
       <div id="count-label">Ram Naam</div>
-      <div id="mala-count">Mala <span id="mala-num">0</span> · <span id="bead-num">0</span>/108</div>
+      <div id="mala-count">Mala <span id="mala-num">0</span> · <span id="bead-num">0</span>/108 <span style="color:var(--muted);margin:0 3px">·</span> <span id="total-mala-num">0</span> Total Malas</div>
     </div>
   </div>
 
@@ -462,15 +462,15 @@
   <div id="stats-row">
     <div class="stat-card">
       <div class="stat-val" id="stat-today">0</div>
-      <div class="stat-sub">Today</div>
+      <div class="stat-sub" id="stat-sub-today">Today</div>
     </div>
     <div class="stat-card">
       <div class="stat-val" id="stat-best">0</div>
-      <div class="stat-sub">Best Day</div>
+      <div class="stat-sub" id="stat-sub-best">Best Day</div>
     </div>
     <div class="stat-card">
       <div class="stat-val" id="stat-total">0</div>
-      <div class="stat-sub">All Time</div>
+      <div class="stat-sub" id="stat-sub-total">All Time</div>
     </div>
   </div>
 
@@ -647,6 +647,11 @@ function updateUI() {
   malaN.textContent = malas;
   beadN.textContent = beads;
 
+  const totalMalas = Math.floor(state.total / 108);
+  const todayMalas = Math.floor(state.today / 108);
+  const totalMalaEl = document.getElementById('total-mala-num');
+  if (totalMalaEl) totalMalaEl.textContent = totalMalas.toLocaleString();
+
   const pct = Math.min(100, Math.round((state.today / state.goal) * 100));
   goalBar.style.width = pct + '%';
   goalPct.textContent = pct + '%';
@@ -659,12 +664,18 @@ function updateUI() {
     ? (state.total / 1000).toFixed(1) + 'k'
     : state.total.toLocaleString();
 
+  const subTotal = document.getElementById('stat-sub-total');
+  if (subTotal) subTotal.textContent = `All Time (${totalMalas.toLocaleString()} M)`;
+
+  const subToday = document.getElementById('stat-sub-today');
+  if (subToday) subToday.textContent = `Today (${todayMalas.toLocaleString()} M)`;
+
   updateRing();
 
   // Update cloud modal numbers if open
   const devStat = document.getElementById('cloud-stat-device-total');
   const logoutStat = document.getElementById('cloud-logout-count');
-  if (devStat) devStat.textContent = state.total.toLocaleString();
+  if (devStat) devStat.innerHTML = `${state.total.toLocaleString()} <span style="font-size:11px;color:var(--muted);display:block;font-weight:normal;">${totalMalas.toLocaleString()} Malas</span>`;
   if (logoutStat) logoutStat.textContent = state.total.toLocaleString();
 }
 window.updateAppUI = updateUI;
@@ -676,19 +687,17 @@ setInterval(() => {
 }, 10000);
 
 // ── Milestone toasts ─────────────────────────────────────────
-const MILESTONES = [108, 216, 324, 432, 540, 1008, 1116];
-let shownMilestones = new Set();
-
 function checkMilestone(n) {
-  for (const m of MILESTONES) {
-    if (n >= m && !shownMilestones.has(m)) {
-      shownMilestones.add(m);
-      showToast(n === m
-        ? `🙏 ${m} Ram Naam! 1 Mala complete`
-        : `🔱 ${m.toLocaleString()} – Jai Shri Ram!`);
+  if (n > 0 && n % 108 === 0) {
+    const malaNum = Math.floor(n / 108);
+    if (malaNum === 1) {
+      showToast('🙏 108 Ram Naam! 1 Mala complete');
+    } else {
+      showToast(`🔱 Mala ${malaNum} complete (${n.toLocaleString()} Ram Naam)! Jai SiyaRam!`);
     }
+  } else if (n === state.goal) {
+    showToast('✨ Daily goal reached! Jai SiyaRam!');
   }
-  if (n === state.goal) showToast('✨ Goal reached! Jai SiyaRam!');
 }
 
 let toastTimer;
@@ -1252,8 +1261,10 @@ function refreshModalUI() {
   }
 
   const cloudVal = cloudCachedData ? (cloudCachedData.total || 0) : window.appState.total;
-  cloudTotalDisplay.textContent = cloudVal.toLocaleString();
-  document.getElementById('cloud-stat-device-total').textContent = window.appState.total.toLocaleString();
+  const cloudMalas = Math.floor(cloudVal / 108);
+  const devMalas = Math.floor(window.appState.total / 108);
+  cloudTotalDisplay.innerHTML = `${cloudVal.toLocaleString()} <span style="font-size:11px;color:var(--muted);display:block;font-weight:normal;">${cloudMalas.toLocaleString()} Malas</span>`;
+  document.getElementById('cloud-stat-device-total').innerHTML = `${window.appState.total.toLocaleString()} <span style="font-size:11px;color:var(--muted);display:block;font-weight:normal;">${devMalas.toLocaleString()} Malas</span>`;
 
   if (isDirty) {
     syncStatusText.innerHTML = `<span style="color:var(--marigold);">🟡 Unsynced changes</span>`;
