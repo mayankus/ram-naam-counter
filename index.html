@@ -688,7 +688,7 @@ function checkMilestone(n) {
         : `🔱 ${m.toLocaleString()} – Jai Shri Ram!`);
     }
   }
-  if (n === state.goal) showToast('✨ Goal reached! Jai Ram Ji Ki!');
+  if (n === state.goal) showToast('✨ Goal reached! Jai SiyaRam!');
 }
 
 let toastTimer;
@@ -1065,8 +1065,8 @@ async function onUserSignedIn(user) {
       const cloudTotal = cloudCachedData.total || 0;
       console.log('[Cloud] Fetched user data. Cloud total:', cloudTotal, 'Local total:', window.appState.total);
 
-      // Case A: Fresh device / new install where local total is 0 or less than cloud
-      if (window.appState.total === 0 && cloudTotal > 0) {
+      // Case A: Fresh device / new install where local is behind or session is empty
+      if (window.appState.total < cloudTotal || (window.appState.total === 0 && cloudTotal > 0) || (window.appState.session === 0 && (cloudCachedData.session > 0 || cloudCachedData.today > 0))) {
         restoreFromCloudData(cloudCachedData);
         window.showAppToast(`✨ Restored ${cloudTotal.toLocaleString()} chants from Cloud!`);
       }
@@ -1101,8 +1101,13 @@ function restoreFromCloudData(data) {
   if (!data) return;
   window.appState.total = data.total || 0;
   window.appState.best  = Math.max(window.appState.best, data.best || 0);
+  
   if (data.todayDate === window.appState.todayDate) {
     window.appState.today = data.today || 0;
+    window.appState.session = (data.session !== undefined && data.session > 0) ? data.session : (data.today || 0);
+  } else {
+    window.appState.today = 0;
+    window.appState.session = 0;
   }
   if (data.goal) window.appState.goal = data.goal;
 
@@ -1130,6 +1135,7 @@ async function performCloudSync() {
     const payload = {
       total: window.appState.total,
       today: window.appState.today,
+      session: window.appState.session,
       todayDate: window.appState.todayDate,
       best: window.appState.best,
       goal: window.appState.goal,
