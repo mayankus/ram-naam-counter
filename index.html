@@ -12,6 +12,7 @@
 <link rel="alternate icon" type="image/png" sizes="192x192" href="./icon-192.png"/>
 <link rel="manifest" href="./manifest.json"/>
 <link rel="apple-touch-icon" href="./icon-192.png"/>
+<script src="./firebase-config.js"></script>
 <style>
   /* ── Design tokens ─────────────────────────────────────────
      Palette  : deep saffron night (#1a0a00) + kumkum (#d4380d)
@@ -26,10 +27,12 @@
   :root {
     --bg:        #1a0a00;
     --bg2:       #2b1200;
+    --bg3:       #3d1c00;
     --kumkum:    #d4380d;
     --marigold:  #f5a623;
     --ivory:     #fdf6e3;
     --muted:     #b08060;
+    --green:     #52c41a;
     --ring-bg:   rgba(245,166,35,.15);
     --r:         160px;   /* mala ring radius */
   }
@@ -38,7 +41,7 @@
     height: 100%; width: 100%;
     background: var(--bg);
     color: var(--ivory);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     user-select: none;
     overflow: hidden;
   }
@@ -54,16 +57,49 @@
   /* ── Header ── */
   header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px 6px;
+    padding: 12px 16px 6px;
   }
   .app-title {
-    font-size: 13px; font-weight: 600; letter-spacing: .12em;
+    font-size: 13px; font-weight: 700; letter-spacing: .08em;
     text-transform: uppercase; color: var(--marigold);
+    display: flex; align-items: center; gap: 4px;
   }
+  .header-actions {
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Cloud sync button badge */
+  .sync-badge {
+    background: var(--bg2); border: 1px solid rgba(245, 166, 35, 0.25);
+    color: var(--ivory); border-radius: 20px;
+    padding: 4px 10px; font-size: 11px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    transition: all .2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sync-badge:hover {
+    background: var(--bg3); border-color: var(--marigold);
+  }
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; background: var(--muted);
+  }
+  .sync-dot.synced { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .sync-dot.syncing {
+    background: var(--marigold);
+    box-shadow: 0 0 6px var(--marigold);
+    animation: pulse-dot .8s infinite alternate;
+  }
+  .sync-dot.dirty { background: var(--marigold); }
+  @keyframes pulse-dot {
+    from { transform: scale(0.8); opacity: 0.5; }
+    to { transform: scale(1.3); opacity: 1; }
+  }
+
   .session-badge {
-    font-size: 12px; color: var(--muted);
+    font-size: 11px; color: var(--muted);
     background: var(--bg2); border-radius: 20px;
-    padding: 4px 10px;
+    padding: 4px 8px;
   }
 
   /* ── Goal strip ── */
@@ -167,6 +203,7 @@
   .stat-card {
     flex: 1; background: var(--bg2); border-radius: 14px;
     padding: 12px 10px; text-align: center;
+    border: 1px solid rgba(245, 166, 35, 0.08);
   }
   .stat-val { font-size: 22px; font-weight: 700; color: var(--ivory); }
   .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .05em; }
@@ -201,28 +238,35 @@
   #toast {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--marigold); color: #1a0a00;
-    font-weight: 700; font-size: 14px; letter-spacing: .06em;
-    padding: 10px 22px; border-radius: 99px;
+    font-weight: 700; font-size: 13px; letter-spacing: .04em;
+    padding: 10px 20px; border-radius: 99px;
     opacity: 0; pointer-events: none;
     transition: opacity .3s, transform .3s;
     white-space: nowrap; z-index: 999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
   #toast.show {
     opacity: 1; transform: translateX(-50%) translateY(0);
   }
 
-  /* ── Goal modal ── */
-  #modal-overlay {
+  /* ── Modal Overlays ── */
+  .modal-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.7); z-index: 100;
+    background: rgba(0,0,0,.75); z-index: 100;
     align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(4px);
   }
-  #modal-overlay.open { display: flex; }
-  #modal {
-    background: var(--bg2); border-radius: 24px 24px 0 0;
-    padding: 28px 24px 40px; width: 100%; max-width: 430px;
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: #230e00; border-radius: 24px 24px 0 0;
+    padding: 24px 20px 36px; width: 100%; max-width: 430px;
+    border-top: 1px solid rgba(245, 166, 35, 0.2);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
+    max-height: 85vh; overflow-y: auto;
   }
-  #modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .modal-sheet h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--ivory); }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.4; }
+
   .goal-opts { display: flex; flex-wrap: wrap; gap: 10px; }
   .goal-opt {
     padding: 10px 18px; border-radius: 99px;
@@ -249,12 +293,85 @@
     border: none; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px; font-weight: 600; cursor: pointer;
   }
-  #btn-close-modal {
-    margin-top: 20px; width: 100%; padding: 13px;
+
+  .btn-modal-close {
+    margin-top: 16px; width: 100%; padding: 12px;
     background: transparent; border: 1.5px solid #3d1c00;
     color: var(--muted); border-radius: 14px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; cursor: pointer;
   }
+
+  /* ── Cloud Modal Elements ── */
+  .cloud-card {
+    background: var(--bg2); border-radius: 16px;
+    padding: 16px; margin-bottom: 14px;
+    border: 1px solid rgba(245, 166, 35, 0.15);
+  }
+  .user-profile-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .user-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--marigold); color: #1a0a00;
+    font-weight: 700; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--marigold);
+  }
+  .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+  .user-info-name { font-size: 15px; font-weight: 700; color: var(--ivory); }
+  .user-info-email { font-size: 12px; color: var(--muted); word-break: break-all; }
+
+  .cloud-metrics {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
+  }
+  .metric-box {
+    background: rgba(0,0,0,0.25); border-radius: 10px;
+    padding: 8px 10px; text-align: center;
+  }
+  .metric-box .label { font-size: 11px; color: var(--muted); }
+  .metric-box .val { font-size: 16px; font-weight: 700; color: var(--marigold); margin-top: 2px; }
+
+  .sync-status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; color: var(--muted); margin-top: 12px;
+    padding-top: 10px; border-top: 1px solid rgba(245, 166, 35, 0.1);
+  }
+
+  .btn-google {
+    width: 100%; background: #ffffff; color: #1f1f1f;
+    border: none; border-radius: 14px; padding: 12px 16px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 8px; transition: transform .1s, background .15s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .btn-google:active { transform: scale(0.98); background: #f0f0f0; }
+
+  .cloud-actions-row {
+    display: flex; gap: 10px; margin-top: 12px;
+  }
+  .btn-cloud-act {
+    flex: 1; padding: 10px; border-radius: 12px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: opacity .15s;
+  }
+  .btn-cloud-act:active { opacity: 0.8; }
+  .btn-sync-now { background: var(--kumkum); color: var(--ivory); }
+  .btn-restore-cloud { background: var(--bg3); color: var(--marigold); border: 1px solid rgba(245, 166, 35, 0.3); }
+  .btn-sign-out { width: 100%; margin-top: 10px; background: transparent; color: #ff7875; border: 1px solid rgba(255, 120, 117, 0.3); border-radius: 12px; padding: 9px; font-size: 12px; cursor: pointer; }
+
+  /* Config Card */
+  .config-section {
+    margin-top: 10px; background: rgba(0,0,0,0.3); border-radius: 12px;
+    padding: 12px; border: 1px dashed rgba(245, 166, 35, 0.3);
+  }
+  .config-section textarea {
+    width: 100%; height: 70px; background: #110500; border: 1px solid #3d1c00;
+    color: #e6b89c; font-family: monospace; font-size: 11px; padding: 8px;
+    border-radius: 8px; margin-top: 8px; resize: none; outline: none;
+  }
+  .config-section textarea:focus { border-color: var(--marigold); }
 
   /* ── Offline status & Install ── */
   .offline-bar {
@@ -281,24 +398,31 @@
 
   <!-- Header -->
   <header>
-    <div class="app-title">🪔 Ram Naam Counter</div>
-    <div style="display:flex;align-items:center;gap:8px">
+    <div class="app-title">🪔 Ram Naam</div>
+    <div class="header-actions">
+      <!-- Cloud Sync & Backup Button -->
+      <button id="btn-cloud-sync" class="sync-badge" aria-label="Cloud Sync" title="Cloud Backup & Sync">
+        <span id="sync-icon">☁️</span>
+        <span id="sync-label">Backup</span>
+        <span id="sync-status-dot" class="sync-dot"></span>
+      </button>
+
       <button id="btn-install" class="hidden" title="Install Ram Naam Counter" style="
         background:var(--kumkum);color:var(--ivory);border:none;border-radius:20px;
-        padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;line-height:1;
+        padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;line-height:1;
         -webkit-tap-highlight-color:transparent;
-      ">📲 Install</button>
+      ">📲</button>
       <button id="btn-vibrate" aria-label="Toggle vibration" style="
         background:var(--bg2);border:none;border-radius:20px;
-        padding:5px 12px;font-size:18px;cursor:pointer;line-height:1;
+        padding:5px 10px;font-size:16px;cursor:pointer;line-height:1;
         -webkit-tap-highlight-color:transparent;
       ">📳</button>
       <button id="btn-sound" aria-label="Toggle sound" style="
         background:var(--bg2);border:none;border-radius:20px;
-        padding:5px 12px;font-size:18px;cursor:pointer;line-height:1;
+        padding:5px 10px;font-size:16px;cursor:pointer;line-height:1;
         -webkit-tap-highlight-color:transparent;
       ">🔊</button>
-      <div class="session-badge" id="session-time">0 min</div>
+      <div class="session-badge" id="session-time">0m</div>
     </div>
   </header>
 
@@ -362,9 +486,10 @@
 <div id="toast"></div>
 
 <!-- Goal modal -->
-<div id="modal-overlay">
-  <div id="modal">
+<div id="modal-overlay" class="modal-overlay">
+  <div id="modal" class="modal-sheet">
     <h2>Set Daily Goal</h2>
+    <p class="modal-sub">Choose a traditional Mala count or set a custom target.</p>
     <div class="goal-opts">
       <button class="goal-opt" data-val="108">108</button>
       <button class="goal-opt" data-val="216">216</button>
@@ -375,12 +500,94 @@
       <input id="custom-goal-input" type="number" placeholder="Custom number" min="1" max="100000"/>
       <button id="btn-set-goal">Set</button>
     </div>
-    <button id="btn-close-modal">Cancel</button>
+    <button id="btn-close-modal" class="btn-modal-close">Cancel</button>
+  </div>
+</div>
+
+<!-- Cloud Backup & Sync Modal -->
+<div id="cloud-modal-overlay" class="modal-overlay">
+  <div id="cloud-modal" class="modal-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>☁️ Cloud Backup & Sync</h2>
+      <button id="btn-close-cloud-modal" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">✕</button>
+    </div>
+    <p class="modal-sub">Protect your lifetime chanting count forever. Access and restore your chanting progress across all devices with zero cost.</p>
+
+    <!-- State 1: Firebase Not Configured -->
+    <div id="cloud-view-unconfigured" class="cloud-card hidden">
+      <div style="font-weight:700;color:var(--marigold);margin-bottom:6px;font-size:14px;">⚙️ Firebase Setup Required</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.4;">To enable free permanent cloud storage, paste your Firebase web config keys below, or edit <code style="color:var(--ivory);">firebase-config.js</code>.</p>
+      <div class="config-section">
+        <label style="font-size:11px;color:var(--muted);">Firebase Web Config JSON:</label>
+        <textarea id="firebase-config-input" placeholder='{"apiKey": "AIzaSy...", "projectId": "...", "authDomain": "..."}'></textarea>
+        <button id="btn-save-firebase-config" style="margin-top:8px;width:100%;padding:8px;background:var(--marigold);color:#1a0a00;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Save & Initialize Firebase</button>
+      </div>
+    </div>
+
+    <!-- State 2: Logged Out -->
+    <div id="cloud-view-logged-out" class="cloud-card">
+      <div style="font-size:13px;color:var(--ivory);margin-bottom:12px;line-height:1.4;">
+        📱 <strong>Current Device Count:</strong> <span id="cloud-logout-count" style="color:var(--marigold);font-weight:700;">0</span> Ram Naam
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.4;">
+        Sign in once with Google to save your chanting progress to the cloud. If your phone breaks or resets, you can restore your count in 1 click.
+      </p>
+      <button id="btn-google-login" class="btn-google">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.55 10.79l7.98-6.2z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Sign in with Google
+      </button>
+    </div>
+
+    <!-- State 3: Logged In -->
+    <div id="cloud-view-logged-in" class="cloud-card hidden">
+      <div class="user-profile-row">
+        <div class="user-avatar" id="user-avatar-slot">R</div>
+        <div>
+          <div class="user-info-name" id="user-name-display">Devotee</div>
+          <div class="user-info-email" id="user-email-display">user@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="cloud-metrics">
+        <div class="metric-box">
+          <div class="label">Cloud Lifetime</div>
+          <div class="val" id="cloud-stat-cloud-total">0</div>
+        </div>
+        <div class="metric-box">
+          <div class="label">Device Lifetime</div>
+          <div class="val" id="cloud-stat-device-total">0</div>
+        </div>
+      </div>
+
+      <div class="sync-status-row">
+        <span id="sync-status-text">🟢 All counts up to date</span>
+        <span id="sync-last-time">Last synced: Just now</span>
+      </div>
+
+      <div class="cloud-actions-row">
+        <button id="btn-sync-now" class="btn-cloud-act btn-sync-now">🔄 Sync Now</button>
+        <button id="btn-restore-cloud" class="btn-cloud-act btn-restore-cloud">📥 Restore</button>
+      </div>
+      <button id="btn-sign-out" class="btn-sign-out">Sign Out</button>
+    </div>
+
+    <button id="btn-close-cloud-modal-footer" class="btn-modal-close">Close</button>
   </div>
 </div>
 
 <script>
-// ── State ────────────────────────────────────────────────────
+// ── State & Storage Persistence ──────────────────────────────
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then(persistent => {
+    if (persistent) console.log('[Storage] Storage persistence granted.');
+  }).catch(() => {});
+}
+
 const TODAY = new Date().toDateString();
 let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
   session: 0,
@@ -391,6 +598,7 @@ let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
   goal: 108,
   sessionStart: Date.now(),
 };
+
 // Reset today if date changed
 if (state.todayDate !== TODAY) {
   if (state.today > state.best) state.best = state.today;
@@ -399,7 +607,12 @@ if (state.todayDate !== TODAY) {
 }
 state.sessionStart = Date.now();
 
-function save() { localStorage.setItem('ram_state', JSON.stringify(state)); }
+// Expose state globally for sync module
+window.appState = state;
+
+function save() { 
+  localStorage.setItem('ram_state', JSON.stringify(state)); 
+}
 
 // ── DOM refs ─────────────────────────────────────────────────
 const tapBtn      = document.getElementById('tap-btn');
@@ -423,7 +636,6 @@ function updateRing() {
   const bead = state.session % 108;
   const frac = bead / 108;
   ringFill.style.strokeDashoffset = CIRCUM * (1 - frac);
-  // colour shift: marigold → kumkum near completion
   const hue = Math.round(36 - frac * 20); // 36°→16°
   ringFill.style.stroke = `hsl(${hue},91%,55%)`;
 }
@@ -448,12 +660,19 @@ function updateUI() {
     : state.total.toLocaleString();
 
   updateRing();
+
+  // Update cloud modal numbers if open
+  const devStat = document.getElementById('cloud-stat-device-total');
+  const logoutStat = document.getElementById('cloud-logout-count');
+  if (devStat) devStat.textContent = state.total.toLocaleString();
+  if (logoutStat) logoutStat.textContent = state.total.toLocaleString();
 }
+window.updateAppUI = updateUI;
 
 // ── Session timer ─────────────────────────────────────────────
 setInterval(() => {
   const mins = Math.floor((Date.now() - state.sessionStart) / 60000);
-  sessionTime.textContent = mins + ' min';
+  sessionTime.textContent = mins + 'm';
 }, 10000);
 
 // ── Milestone toasts ─────────────────────────────────────────
@@ -479,6 +698,7 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
+window.showAppToast = showToast;
 
 // ── Ripple ────────────────────────────────────────────────────
 function spawnRipple(x, y) {
@@ -507,8 +727,7 @@ btnVibrate.addEventListener('click', () => {
   if (vibrateOn && navigator.vibrate) navigator.vibrate(30);
 });
 
-// ── Audio / Sound ─────────────────────────────────────────────
-// ── Web Audio API Engine with HTML5 Audio Fallback ─────────────
+// ── Audio / Sound Engine ──────────────────────────────────────
 let soundOn = JSON.parse(localStorage.getItem('ram_sound') ?? 'true');
 const btnSound = document.getElementById('btn-sound');
 
@@ -529,7 +748,6 @@ function initAudio() {
   } catch (e) {}
 }
 
-// Load audio into memory for 100% offline playback with zero latency
 fetch('./ram.mp3')
   .then(res => res.arrayBuffer())
   .then(arrayBuffer => {
@@ -558,8 +776,6 @@ btnSound.addEventListener('click', () => {
 function playRam() {
   if (!soundOn) return;
   initAudio();
-
-  // Primary: Web Audio API (instantaneous, offline-safe, multi-tap polyphonic)
   if (audioCtx && ramBuffer) {
     try {
       const source = audioCtx.createBufferSource();
@@ -569,8 +785,6 @@ function playRam() {
       return;
     } catch (e) {}
   }
-
-  // Secondary fallback: HTMLMediaElement
   try {
     const clip = ramAudioFallback.cloneNode();
     clip.volume = 1;
@@ -589,7 +803,7 @@ function handleTap(e) {
   state.today++;
   state.total++;
 
-  // pop animation
+  // Pop animation
   countNum.classList.remove('pop');
   void countNum.offsetWidth;
   countNum.classList.add('pop');
@@ -601,10 +815,14 @@ function handleTap(e) {
   checkMilestone(state.session);
   updateUI();
   save();
+
+  // Notify Cloud Sync Engine
+  if (window.onChantTap) {
+    window.onChantTap(state);
+  }
 }
 
 tapBtn.addEventListener('click', handleTap);
-// Keyboard support
 document.addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'Enter') {
     e.preventDefault();
@@ -623,16 +841,17 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 });
 
 // ── Goal modal ────────────────────────────────────────────────
-const overlay = document.getElementById('modal-overlay');
-document.getElementById('btn-goal').addEventListener('click', () => overlay.classList.add('open'));
-document.getElementById('btn-close-modal').addEventListener('click', () => overlay.classList.remove('open'));
-overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+const goalOverlay = document.getElementById('modal-overlay');
+document.getElementById('btn-goal').addEventListener('click', () => goalOverlay.classList.add('open'));
+document.getElementById('btn-close-modal').addEventListener('click', () => goalOverlay.classList.remove('open'));
+goalOverlay.addEventListener('click', e => { if (e.target === goalOverlay) goalOverlay.classList.remove('open'); });
 
 document.querySelectorAll('.goal-opt').forEach(btn => {
   btn.addEventListener('click', () => {
     state.goal = parseInt(btn.dataset.val);
-    save(); updateUI(); overlay.classList.remove('open');
+    save(); updateUI(); goalOverlay.classList.remove('open');
     showToast(`Goal set to ${state.goal.toLocaleString()} 🎯`);
+    if (window.onStateUpdated) window.onStateUpdated();
   });
 });
 
@@ -640,12 +859,10 @@ document.getElementById('btn-set-goal').addEventListener('click', () => {
   const v = parseInt(document.getElementById('custom-goal-input').value);
   if (!v || v < 1) return;
   state.goal = v;
-  save(); updateUI(); overlay.classList.remove('open');
+  save(); updateUI(); goalOverlay.classList.remove('open');
   showToast(`Goal set to ${state.goal.toLocaleString()} 🎯`);
+  if (window.onStateUpdated) window.onStateUpdated();
 });
-
-// ── Init ──────────────────────────────────────────────────────
-updateUI();
 
 // ── Service Worker & Offline Experience ───────────────────────
 const offlineBar = document.getElementById('offline-bar');
@@ -664,7 +881,7 @@ window.addEventListener('online', () => {
 });
 window.addEventListener('offline', () => {
   updateOnlineStatus();
-  showToast('📴 You are offline · Chanting saved locally');
+  showToast('📴 Offline · Chanting saved locally');
 });
 updateOnlineStatus();
 
@@ -721,6 +938,392 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+updateUI();
+</script>
+
+<!-- ── Firebase Cloud Sync Module ────────────────────────────── -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+let app = null;
+let auth = null;
+let db = null;
+let currentUser = null;
+let lastSyncedTotal = window.appState.total;
+let isDirty = false;
+let isSyncing = false;
+let debounceTimer = null;
+let cloudCachedData = null;
+
+// DOM Elements for Cloud Sync Modal
+const cloudOverlay      = document.getElementById('cloud-modal-overlay');
+const btnCloudSyncBadge = document.getElementById('btn-cloud-sync');
+const btnCloseCloud1    = document.getElementById('btn-close-cloud-modal');
+const btnCloseCloud2    = document.getElementById('btn-close-cloud-modal-footer');
+
+const viewUnconfigured  = document.getElementById('cloud-view-unconfigured');
+const viewLoggedOut     = document.getElementById('cloud-view-logged-out');
+const viewLoggedIn      = document.getElementById('cloud-view-logged-in');
+
+const syncIcon          = document.getElementById('sync-icon');
+const syncLabel         = document.getElementById('sync-label');
+const syncDot           = document.getElementById('sync-status-dot');
+
+const btnGoogleLogin    = document.getElementById('btn-google-login');
+const btnSyncNow        = document.getElementById('btn-sync-now');
+const btnRestoreCloud   = document.getElementById('btn-restore-cloud');
+const btnSignOut        = document.getElementById('btn-sign-out');
+
+const userNameDisplay   = document.getElementById('user-name-display');
+const userEmailDisplay  = document.getElementById('user-email-display');
+const userAvatarSlot    = document.getElementById('user-avatar-slot');
+const cloudTotalDisplay = document.getElementById('cloud-stat-cloud-total');
+const syncStatusText    = document.getElementById('sync-status-text');
+const syncLastTime      = document.getElementById('sync-last-time');
+
+// Open / Close Modal
+function openCloudModal() {
+  refreshModalUI();
+  cloudOverlay.classList.add('open');
+}
+function closeCloudModal() {
+  cloudOverlay.classList.remove('open');
+}
+
+btnCloudSyncBadge.addEventListener('click', openCloudModal);
+btnCloseCloud1.addEventListener('click', closeCloudModal);
+btnCloseCloud2.addEventListener('click', closeCloudModal);
+cloudOverlay.addEventListener('click', e => { if (e.target === cloudOverlay) closeCloudModal(); });
+
+// Firebase Config Input handler in UI
+const cfgInput = document.getElementById('firebase-config-input');
+const btnSaveCfg = document.getElementById('btn-save-firebase-config');
+if (btnSaveCfg) {
+  btnSaveCfg.addEventListener('click', () => {
+    try {
+      const raw = cfgInput.value.trim();
+      let parsed;
+      if (raw.startsWith('{')) {
+        parsed = JSON.parse(raw);
+      } else {
+        // extract keys if js object
+        const clean = raw.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ');
+        parsed = JSON.parse(clean);
+      }
+      localStorage.setItem('ram_custom_firebase_config', JSON.stringify(parsed));
+      window.FIREBASE_CONFIG = parsed;
+      window.showAppToast('✅ Firebase config saved! Connecting...');
+      initFirebase();
+    } catch (err) {
+      alert('Could not parse Firebase config. Please provide valid JSON.');
+    }
+  });
+}
+
+// ── Initialize Firebase ──────────────────────────────────────
+function initFirebase() {
+  if (!window.isFirebaseConfigured()) {
+    updateSyncBadgeUI('unconfigured');
+    return;
+  }
+
+  try {
+    app = initializeApp(window.FIREBASE_CONFIG);
+    auth = getAuth(app);
+    db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        console.log('[Auth] Logged in as:', user.email);
+        await onUserSignedIn(user);
+      } else {
+        console.log('[Auth] Logged out');
+        cloudCachedData = null;
+        updateSyncBadgeUI('logged-out');
+      }
+      refreshModalUI();
+    });
+  } catch (err) {
+    console.warn('[Firebase Init Error]', err);
+    updateSyncBadgeUI('error');
+  }
+}
+
+// ── On User Signed In & Cloud Merge ──────────────────────────
+async function onUserSignedIn(user) {
+  updateSyncBadgeUI('syncing');
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const snap = await getDoc(userDocRef);
+
+    if (snap.exists()) {
+      cloudCachedData = snap.data();
+      const cloudTotal = cloudCachedData.total || 0;
+      console.log('[Cloud] Fetched user data. Cloud total:', cloudTotal, 'Local total:', window.appState.total);
+
+      // Case A: Fresh device / new install where local total is 0 or less than cloud
+      if (window.appState.total === 0 && cloudTotal > 0) {
+        restoreFromCloudData(cloudCachedData);
+        window.showAppToast(`✨ Restored ${cloudTotal.toLocaleString()} chants from Cloud!`);
+      }
+      // Case B: Local is ahead (user chanted offline while logged out)
+      else if (window.appState.total > cloudTotal) {
+        isDirty = true;
+        await performCloudSync();
+        window.showAppToast('☁️ Offline chants synced to Cloud!');
+      } 
+      // Case C: Perfectly in sync
+      else {
+        lastSyncedTotal = window.appState.total;
+        isDirty = false;
+        updateSyncBadgeUI('synced');
+      }
+    } else {
+      // First time user backed up: push local state to cloud
+      console.log('[Cloud] Creating first cloud document for user.');
+      isDirty = true;
+      await performCloudSync();
+      window.showAppToast('☁️ Chants safely backed up to Google Account!');
+    }
+  } catch (err) {
+    console.error('[Cloud Fetch Error]', err);
+    updateSyncBadgeUI('error');
+    window.showAppToast('⚠️ Cloud connection issue · Chants safe locally');
+  }
+}
+
+// ── Restore Helper ───────────────────────────────────────────
+function restoreFromCloudData(data) {
+  if (!data) return;
+  window.appState.total = data.total || 0;
+  window.appState.best  = Math.max(window.appState.best, data.best || 0);
+  if (data.todayDate === window.appState.todayDate) {
+    window.appState.today = data.today || 0;
+  }
+  if (data.goal) window.appState.goal = data.goal;
+
+  localStorage.setItem('ram_state', JSON.stringify(window.appState));
+  lastSyncedTotal = window.appState.total;
+  isDirty = false;
+  window.updateAppUI();
+  updateSyncBadgeUI('synced');
+  refreshModalUI();
+}
+
+// ── Cloud Sync Engine (Debounced Batch Sync) ─────────────────
+async function performCloudSync() {
+  if (!currentUser || !db || isSyncing || !navigator.onLine) return;
+  if (!isDirty && window.appState.total === lastSyncedTotal) {
+    updateSyncBadgeUI('synced');
+    return;
+  }
+
+  isSyncing = true;
+  updateSyncBadgeUI('syncing');
+
+  try {
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const payload = {
+      total: window.appState.total,
+      today: window.appState.today,
+      todayDate: window.appState.todayDate,
+      best: window.appState.best,
+      goal: window.appState.goal,
+      lastSyncedAt: Date.now(),
+      email: currentUser.email || '',
+      displayName: currentUser.displayName || ''
+    };
+
+    await setDoc(userDocRef, payload, { merge: true });
+    cloudCachedData = payload;
+    lastSyncedTotal = window.appState.total;
+    isDirty = false;
+    isSyncing = false;
+    updateSyncBadgeUI('synced');
+    refreshModalUI();
+    console.log('[Cloud] Successfully batch synced to Firestore. Total:', lastSyncedTotal);
+  } catch (err) {
+    console.error('[Cloud Sync Error]', err);
+    isSyncing = false;
+    updateSyncBadgeUI('dirty');
+  }
+}
+
+function queueCloudSync(delayMs = 5000) {
+  if (!currentUser) return;
+  isDirty = true;
+  updateSyncBadgeUI('dirty');
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    performCloudSync();
+  }, delayMs);
+}
+
+// Hook into tap events: purely debounced (5s after continuous chanting session stops)
+window.onChantTap = (state) => {
+  if (currentUser) {
+    queueCloudSync(5000);
+  }
+};
+
+window.onStateUpdated = () => {
+  if (currentUser) queueCloudSync(2000);
+};
+
+// ── Lifecycle Sync Triggers ──────────────────────────────────
+// 1. App minimize / screen lock
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && isDirty && currentUser) {
+    performCloudSync();
+  }
+});
+
+// 2. Page close / swipe exit
+window.addEventListener('pagehide', () => {
+  if (isDirty && currentUser) performCloudSync();
+});
+
+// 3. Internet reconnected
+window.addEventListener('online', () => {
+  if (currentUser && isDirty) performCloudSync();
+});
+
+// ── UI Status Updaters ───────────────────────────────────────
+function updateSyncBadgeUI(status) {
+  syncDot.className = 'sync-dot';
+  if (status === 'synced') {
+    syncDot.classList.add('synced');
+    syncLabel.textContent = 'Synced';
+    btnCloudSyncBadge.title = `Cloud Synced (${currentUser ? currentUser.email : ''})`;
+  } else if (status === 'syncing') {
+    syncDot.classList.add('syncing');
+    syncLabel.textContent = 'Syncing...';
+  } else if (status === 'dirty') {
+    syncDot.classList.add('dirty');
+    syncLabel.textContent = 'Pending';
+  } else if (status === 'logged-out') {
+    syncLabel.textContent = 'Backup';
+    btnCloudSyncBadge.title = 'Backup to Google Account';
+  } else if (status === 'unconfigured') {
+    syncLabel.textContent = 'Cloud';
+    btnCloudSyncBadge.title = 'Setup Firebase Cloud Backup';
+  } else {
+    syncLabel.textContent = 'Offline';
+  }
+}
+
+function refreshModalUI() {
+  if (!window.isFirebaseConfigured()) {
+    viewUnconfigured.classList.remove('hidden');
+    viewLoggedOut.classList.add('hidden');
+    viewLoggedIn.classList.add('hidden');
+    return;
+  }
+  viewUnconfigured.classList.add('hidden');
+
+  if (!currentUser) {
+    viewLoggedOut.classList.remove('hidden');
+    viewLoggedIn.classList.add('hidden');
+    const outTotal = document.getElementById('cloud-logout-count');
+    if (outTotal) outTotal.textContent = window.appState.total.toLocaleString();
+    return;
+  }
+
+  viewLoggedOut.classList.add('hidden');
+  viewLoggedIn.classList.remove('hidden');
+
+  userNameDisplay.textContent = currentUser.displayName || 'Devotee';
+  userEmailDisplay.textContent = currentUser.email || '';
+
+  if (currentUser.photoURL) {
+    userAvatarSlot.innerHTML = `<img src="${currentUser.photoURL}" alt="avatar" referrerpolicy="no-referrer"/>`;
+  } else {
+    userAvatarSlot.textContent = (currentUser.displayName || currentUser.email || 'R')[0].toUpperCase();
+  }
+
+  const cloudVal = cloudCachedData ? (cloudCachedData.total || 0) : window.appState.total;
+  cloudTotalDisplay.textContent = cloudVal.toLocaleString();
+  document.getElementById('cloud-stat-device-total').textContent = window.appState.total.toLocaleString();
+
+  if (isDirty) {
+    syncStatusText.innerHTML = `<span style="color:var(--marigold);">🟡 Unsynced changes</span>`;
+  } else {
+    syncStatusText.innerHTML = `<span style="color:var(--green);">🟢 All counts in sync</span>`;
+  }
+
+  if (cloudCachedData && cloudCachedData.lastSyncedAt) {
+    const d = new Date(cloudCachedData.lastSyncedAt);
+    syncLastTime.textContent = 'Synced: ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } else {
+    syncLastTime.textContent = 'Synced: Just now';
+  }
+}
+
+// ── Google Sign In / Sign Out Actions ────────────────────────
+btnGoogleLogin.addEventListener('click', async () => {
+  if (!auth) {
+    alert('Firebase is not initialized. Please configure keys in firebase-config.js.');
+    return;
+  }
+  const provider = new GoogleAuthProvider();
+  try {
+    btnGoogleLogin.disabled = true;
+    btnGoogleLogin.textContent = 'Connecting...';
+    await signInWithPopup(auth, provider);
+    window.showAppToast('🙏 Welcome! Signed in with Google');
+  } catch (err) {
+    console.error('Google Sign In Error:', err);
+    alert('Google Sign-In Error: ' + (err.message || err));
+  } finally {
+    btnGoogleLogin.disabled = false;
+    btnGoogleLogin.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.55 10.79l7.98-6.2z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Sign in with Google
+    `;
+  }
+});
+
+btnSyncNow.addEventListener('click', async () => {
+  if (!currentUser) return;
+  isDirty = true;
+  await performCloudSync();
+  window.showAppToast('☁️ Synced to Cloud!');
+});
+
+btnRestoreCloud.addEventListener('click', async () => {
+  if (!currentUser || !cloudCachedData) {
+    window.showAppToast('No cloud data found to restore.');
+    return;
+  }
+  if (confirm(`Restore ${cloudCachedData.total.toLocaleString()} chants from Cloud? This will update your device count.`)) {
+    restoreFromCloudData(cloudCachedData);
+    window.showAppToast('✨ Chants restored from Cloud!');
+  }
+});
+
+btnSignOut.addEventListener('click', async () => {
+  if (!auth) return;
+  if (confirm('Sign out of Google Backup? (Your local chants remain safe on this device)')) {
+    await signOut(auth);
+    currentUser = null;
+    cloudCachedData = null;
+    updateSyncBadgeUI('logged-out');
+    refreshModalUI();
+    window.showAppToast('Signed out of Cloud Backup');
+  }
+});
+
+// Boot Firebase
+initFirebase();
 </script>
 </body>
 </html>

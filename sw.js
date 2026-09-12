@@ -1,10 +1,11 @@
-// Ram Naam Counter Service Worker (v3)
-const CACHE_NAME = 'ram-naam-v3';
+// Ram Naam Counter Service Worker (v4)
+const CACHE_NAME = 'ram-naam-v4';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './firebase-config.js',
   './ram.mp3',
   './icon-192.png',
   './icon-512.png',
@@ -93,6 +94,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Bypass Firebase Auth, Firestore streams, and Google Identity APIs so network handles them directly
+  if (
+    request.url.includes('identitytoolkit.googleapis.com') ||
+    request.url.includes('firestore.googleapis.com') ||
+    request.url.includes('securetoken.googleapis.com') ||
+    request.url.includes('accounts.google.com') ||
+    request.url.includes('firebaseio.com')
+  ) {
+    return;
+  }
+
   // Handle navigation requests (page visits / refreshes)
   if (request.mode === 'navigate') {
     event.respondWith(
@@ -116,7 +128,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Handle static assets (audio, icons, manifest, html)
+  // Handle static assets (audio, icons, manifest, html, scripts)
   event.respondWith(
     caches.match(request, { ignoreSearch: true }).then(async cached => {
       if (cached) {
