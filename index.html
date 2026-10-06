@@ -12,6 +12,9 @@
 <link rel="alternate icon" type="image/png" sizes="192x192" href="./icon-192.png"/>
 <link rel="manifest" href="./manifest.json"/>
 <link rel="apple-touch-icon" href="./icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Outfit:wght@400;500;600;700;800&family=Tiro+Devanagari+Sanskrit&display=swap" rel="stylesheet"/>
 <script src="./firebase-config.js"></script>
 <style>
   /* ── Design tokens ─────────────────────────────────────────
@@ -35,13 +38,15 @@
     --green:     #52c41a;
     --ring-bg:   rgba(245,166,35,.15);
     --r:         160px;   /* mala ring radius */
+    --font-ui:   'Outfit', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-sanskrit: 'Tiro Devanagari Sanskrit', serif;
   }
 
   html, body {
     height: 100%; width: 100%;
     background: var(--bg);
     color: var(--ivory);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-ui);
     user-select: none;
     overflow: hidden;
   }
@@ -163,8 +168,8 @@
     box-shadow: 0 0 0 1px #f5a62355, 0 6px 20px #00000099, inset 0 2px 6px #00000066;
   }
   .mantra-text {
-    font-family: serif;
-    font-size: 32px; line-height: 1; color: var(--marigold);
+    font-family: var(--font-sanskrit);
+    font-size: 34px; line-height: 1; color: var(--marigold);
     text-shadow: 0 0 20px #f5a62366;
   }
   .tap-hint {
@@ -172,7 +177,7 @@
     color: var(--muted);
   }
 
-  /* ── Big count ── */
+  /* ── Big count (Smooth Per-Digit Animation) ── */
   #count-display {
     text-align: center; margin-top: 20px;
   }
@@ -180,12 +185,56 @@
     font-size: 64px; font-weight: 700; line-height: 1;
     color: var(--ivory);
     font-variant-numeric: tabular-nums;
-    transition: transform .1s ease;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    letter-spacing: 0.02em;
   }
-  #count-number.pop { transform: scale(1.12); }
+  .counter-char {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    min-width: 0.6em;
+    text-align: center;
+    position: relative;
+    will-change: transform, color, text-shadow;
+    transition: color 0.15s ease;
+  }
+  .counter-sep {
+    display: inline-block;
+    min-width: 0.28em;
+    text-align: center;
+    color: var(--muted);
+    opacity: 0.8;
+  }
+  .counter-char.digit-changed {
+    animation: digit-smooth-tick 0.22s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  }
+  @keyframes digit-smooth-tick {
+    0% {
+      transform: translateY(6px) scale(1.18);
+      color: #ffffff;
+      text-shadow: 0 0 16px var(--marigold), 0 0 4px #ffffff;
+    }
+    60% {
+      transform: translateY(-1px) scale(1.05);
+      color: #ffd591;
+      text-shadow: 0 0 8px rgba(245, 166, 35, 0.5);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      color: var(--ivory);
+      text-shadow: none;
+    }
+  }
   #count-label {
     font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
     color: var(--muted); margin-top: 4px;
+    cursor: pointer;
+    transition: color .15s;
+    user-select: none;
+  }
+  #count-label:hover {
+    color: var(--marigold);
   }
 
   /* ── Mala count (108 cycle) ── */
@@ -391,6 +440,74 @@
     gap: 6px;
   }
   .hidden { display: none !important; }
+
+  /* ── Streak & History Styles ── */
+  .streak-badge {
+    background: var(--bg2); border: 1px solid rgba(245, 166, 35, 0.25);
+    color: var(--marigold); border-radius: 20px;
+    padding: 4px 9px; font-size: 11px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; gap: 4px;
+    transition: all .2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .streak-badge:hover {
+    background: var(--bg3); border-color: var(--marigold);
+  }
+  .icon-btn {
+    background: var(--bg2); border: 1px solid rgba(245, 166, 35, 0.15);
+    border-radius: 20px; padding: 5px 8px; font-size: 14px;
+    cursor: pointer; line-height: 1; color: var(--ivory);
+    transition: all .2s ease; -webkit-tap-highlight-color: transparent;
+  }
+  .icon-btn:hover { background: var(--bg3); }
+  .history-summary {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+  }
+  .history-box {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(245,166,35,0.15);
+    border-radius: 12px; padding: 12px; text-align: center;
+  }
+  .history-box .val { font-size: 22px; font-weight: 700; color: var(--marigold); }
+  .history-box .lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .history-list {
+    display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;
+  }
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(0,0,0,0.25); border-radius: 10px; padding: 10px 14px;
+    border: 1px solid rgba(245,166,35,0.08); font-size: 13px;
+  }
+  .history-item-date { color: var(--ivory); font-weight: 500; font-size: 12px; }
+  .history-item-count { color: var(--marigold); font-weight: 700; }
+  .history-empty { text-align: center; color: var(--muted); font-size: 12px; padding: 16px 0; }
+
+  /* ── Pocket / Night Dimmer Mode ── */
+  body.pocket-mode {
+    background: #000000 !important;
+  }
+  body.pocket-mode header,
+  body.pocket-mode #offline-bar,
+  body.pocket-mode #goal-strip,
+  body.pocket-mode #stats-row,
+  body.pocket-mode #action-bar {
+    display: none !important;
+  }
+  body.pocket-mode #app {
+    padding: 0; max-width: 100%;
+  }
+  body.pocket-mode #center {
+    width: 100vw; height: 100dvh; cursor: pointer;
+  }
+  #pocket-exit-btn {
+    display: none; position: fixed; top: 16px; right: 16px;
+    background: rgba(255, 255, 255, 0.12); color: var(--ivory);
+    border: 1px solid rgba(245, 166, 35, 0.3); border-radius: 99px;
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    cursor: pointer; z-index: 999; backdrop-filter: blur(8px);
+  }
+  body.pocket-mode #pocket-exit-btn {
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -400,6 +517,15 @@
   <header>
     <div class="app-title">🪔 Ram Naam</div>
     <div class="header-actions">
+      <!-- Sadhana Streak Badge -->
+      <button id="btn-streak" class="streak-badge" aria-label="Sadhana Streak" title="Sadhana Streak & History">
+        <span>🔥</span>
+        <span id="streak-badge-count">0</span>
+      </button>
+
+      <!-- Pocket / Night Mode Toggle -->
+      <button id="btn-pocket" class="icon-btn" aria-label="Toggle Pocket/Night Mode" title="Pocket / Night Mode (OLED Black, Tap anywhere)">🌙</button>
+
       <!-- Cloud Sync & Backup Button -->
       <button id="btn-cloud-sync" class="sync-badge" aria-label="Cloud Sync" title="Cloud Backup & Sync">
         <span id="sync-icon">☁️</span>
@@ -504,6 +630,38 @@
   </div>
 </div>
 
+<!-- Sadhana History & Streaks Modal -->
+<div id="history-modal-overlay" class="modal-overlay">
+  <div id="history-modal" class="modal-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>🔥 Sadhana History & Streak</h2>
+      <button id="btn-close-history-modal" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">✕</button>
+    </div>
+    <p class="modal-sub">Consistent daily Japa fosters spiritual focus. Track your daily malas and keep your devotional streak alive.</p>
+    
+    <div class="history-summary">
+      <div class="history-box">
+        <div class="val" id="history-stat-streak">0</div>
+        <div class="lbl">Day Streak 🔥</div>
+      </div>
+      <div class="history-box">
+        <div class="val" id="history-stat-best">0</div>
+        <div class="lbl">Best Day Record 🏆</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--ivory);margin-bottom:10px;">Recent Chanting Days</div>
+    <div id="history-list-container" class="history-list">
+      <!-- Populated dynamically -->
+    </div>
+
+    <button id="btn-close-history-modal-footer" class="btn-modal-close">Close</button>
+  </div>
+</div>
+
+<!-- Pocket / Night Mode Exit Button -->
+<button id="pocket-exit-btn">✕ Exit Pocket Mode</button>
+
 <!-- Cloud Backup & Sync Modal -->
 <div id="cloud-modal-overlay" class="modal-overlay">
   <div id="cloud-modal" class="modal-sheet">
@@ -596,14 +754,40 @@ let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
   best: 0,
   total: 0,
   goal: 108,
+  goalReachedToday: false,
+  streak: 0,
+  lastStreakDate: null,
+  history: {},
+  displayMode: 'session',
   sessionStart: Date.now(),
 };
+
+// Backward compatibility check
+if (!state.history) state.history = {};
+if (state.goalReachedToday === undefined) state.goalReachedToday = false;
+if (state.streak === undefined) state.streak = 0;
+if (!state.displayMode) state.displayMode = 'session';
 
 // Reset today if date changed
 if (state.todayDate !== TODAY) {
   if (state.today > state.best) state.best = state.today;
+  if (state.today > 0 && state.todayDate) {
+    state.history[state.todayDate] = state.today;
+  }
+
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (state.lastStreakDate === yesterday) {
+    // Streak preserved from yesterday
+  } else if (state.todayDate === yesterday && state.today > 0) {
+    state.streak = (state.streak || 0) + 1;
+    state.lastStreakDate = yesterday;
+  } else if (state.lastStreakDate !== yesterday) {
+    state.streak = 0;
+  }
+
   state.todayDate = TODAY;
   state.today = 0;
+  state.goalReachedToday = false;
 }
 state.sessionStart = Date.now();
 
@@ -627,6 +811,8 @@ const statBest    = document.getElementById('stat-best');
 const statTotal   = document.getElementById('stat-total');
 const sessionTime = document.getElementById('session-time');
 const toast       = document.getElementById('toast');
+const streakEl    = document.getElementById('streak-badge-count');
+const countLabel  = document.getElementById('count-label');
 
 // ── Mala ring math ───────────────────────────────────────────
 const CIRCUM = 2 * Math.PI * 130; // r=130
@@ -640,8 +826,82 @@ function updateRing() {
   ringFill.style.stroke = `hsl(${hue},91%,55%)`;
 }
 
+// ── Smooth Per-Digit Counter Engine ──────────────────────────
+// Ensures only the modified digit(s) animate/flash without shaking the entire number
+function renderSmoothCounter(container, newVal, isInitial = false) {
+  const newStr = newVal.toLocaleString();
+
+  if (isInitial || container.children.length === 0) {
+    container.innerHTML = '';
+    for (let i = 0; i < newStr.length; i++) {
+      const char = newStr[i];
+      const span = document.createElement('span');
+      span.className = (char === ',' || char === '.') ? 'counter-sep' : 'counter-char';
+      span.textContent = char;
+      container.appendChild(span);
+    }
+    container.dataset.val = newStr;
+    return;
+  }
+
+  const oldStr = container.dataset.val || '';
+  if (oldStr === newStr) return;
+
+  if (container.children.length === newStr.length) {
+    for (let i = 0; i < newStr.length; i++) {
+      const span = container.children[i];
+      const newChar = newStr[i];
+      if (span.textContent !== newChar) {
+        span.textContent = newChar;
+        if (span.classList.contains('counter-char')) {
+          span.classList.remove('digit-changed');
+          void span.offsetWidth; // Force reflow to restart isolated digit animation
+          span.classList.add('digit-changed');
+        }
+      }
+    }
+  } else {
+    container.innerHTML = '';
+    const oldLen = oldStr.length;
+    const newLen = newStr.length;
+
+    for (let i = 0; i < newLen; i++) {
+      const newChar = newStr[i];
+      const distFromRight = newLen - 1 - i;
+      const oldIdx = oldLen - 1 - distFromRight;
+      const oldChar = oldIdx >= 0 ? oldStr[oldIdx] : null;
+
+      const span = document.createElement('span');
+      span.className = (newChar === ',' || newChar === '.') ? 'counter-sep' : 'counter-char';
+      span.textContent = newChar;
+
+      if (span.classList.contains('counter-char') && oldChar !== newChar) {
+        span.classList.add('digit-changed');
+      }
+      container.appendChild(span);
+    }
+  }
+
+  container.dataset.val = newStr;
+}
+
 function updateUI() {
-  countNum.textContent = state.session.toLocaleString();
+  let displayedVal = state.session;
+  let labelSuffix = '';
+  if (state.displayMode === 'today') {
+    displayedVal = state.today;
+    labelSuffix = ' (Today)';
+  } else if (state.displayMode === 'total') {
+    displayedVal = state.total;
+    labelSuffix = ' (All Time)';
+  } else {
+    displayedVal = state.session;
+    labelSuffix = ' (Session)';
+  }
+
+  if (countLabel) countLabel.textContent = `Ram Naam${labelSuffix}`;
+  renderSmoothCounter(countNum, displayedVal);
+
   const malas = Math.floor(state.session / 108);
   const beads = state.session % 108;
   malaN.textContent = malas;
@@ -670,6 +930,8 @@ function updateUI() {
   const subToday = document.getElementById('stat-sub-today');
   if (subToday) subToday.textContent = `Today (${todayMalas.toLocaleString()} M)`;
 
+  if (streakEl) streakEl.textContent = state.streak || 0;
+
   updateRing();
 
   // Update cloud modal numbers if open
@@ -687,16 +949,28 @@ setInterval(() => {
 }, 10000);
 
 // ── Milestone toasts ─────────────────────────────────────────
-function checkMilestone(n) {
-  if (n > 0 && n % 108 === 0) {
-    const malaNum = Math.floor(n / 108);
-    if (malaNum === 1) {
-      showToast('🙏 108 Ram Naam! 1 Mala complete');
-    } else {
-      showToast(`🔱 Mala ${malaNum} complete (${n.toLocaleString()} Ram Naam)! Jai SiyaRam!`);
+const shownMilestones = new Set();
+
+function checkMilestone(sessionCount) {
+  // Mala completion: every 108 in this session
+  if (sessionCount > 0 && sessionCount % 108 === 0) {
+    const malaNum = Math.floor(sessionCount / 108);
+    const key = 'mala_' + malaNum;
+    if (!shownMilestones.has(key)) {
+      shownMilestones.add(key);
+      if (malaNum === 1) {
+        showToast('🙏 108 Ram Naam! 1 Mala complete');
+      } else {
+        showToast(`🔱 Mala ${malaNum} complete (${sessionCount.toLocaleString()} Ram Naam)! Jai SiyaRam!`);
+      }
     }
-  } else if (n === state.goal) {
-    showToast('✨ Daily goal reached! Jai SiyaRam!');
+  }
+
+  // Daily goal completion: checks today's cumulative progress!
+  if (state.today >= state.goal && !state.goalReachedToday) {
+    state.goalReachedToday = true;
+    showToast(`✨ Daily goal of ${state.goal.toLocaleString()} reached! Jai SiyaRam! 🎯`);
+    save();
   }
 }
 
@@ -812,12 +1086,17 @@ function handleTap(e) {
   state.today++;
   state.total++;
 
-  // Pop animation
-  countNum.classList.remove('pop');
-  void countNum.offsetWidth;
-  countNum.classList.add('pop');
-  setTimeout(() => countNum.classList.remove('pop'), 100);
+  // Record today in history
+  if (!state.history) state.history = {};
+  state.history[TODAY] = state.today;
 
+  // Update streak if 108 chants reached today
+  if (state.today >= 108 && state.lastStreakDate !== TODAY) {
+    state.streak = (state.streak || 0) + 1;
+    state.lastStreakDate = TODAY;
+  }
+
+  // Visual feedback: ripples and smooth single-digit update (no whole-number pop)
   const rect = tapBtn.getBoundingClientRect();
   spawnRipple(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -838,6 +1117,89 @@ document.addEventListener('keydown', e => {
     initAudio();
     handleTap();
   }
+});
+
+// Toggle display mode (Session / Today / All Time) on label click
+if (countLabel) {
+  countLabel.addEventListener('click', () => {
+    if (state.displayMode === 'session') state.displayMode = 'today';
+    else if (state.displayMode === 'today') state.displayMode = 'total';
+    else state.displayMode = 'session';
+    save();
+    updateUI();
+    showToast(`Viewing: ${state.displayMode === 'session' ? 'Session' : state.displayMode === 'today' ? 'Today' : 'All Time'} Count`);
+  });
+}
+
+// ── Pocket / Night Dimmer Mode ──
+const btnPocket = document.getElementById('btn-pocket');
+const pocketExitBtn = document.getElementById('pocket-exit-btn');
+const centerZone = document.getElementById('center');
+
+function togglePocketMode(enable) {
+  const isPocket = (enable !== undefined) ? enable : !document.body.classList.contains('pocket-mode');
+  if (isPocket) {
+    document.body.classList.add('pocket-mode');
+    showToast('🌙 Pocket Mode active · Tap anywhere to chant');
+  } else {
+    document.body.classList.remove('pocket-mode');
+  }
+}
+
+if (btnPocket) btnPocket.addEventListener('click', () => togglePocketMode());
+if (pocketExitBtn) pocketExitBtn.addEventListener('click', () => togglePocketMode(false));
+
+if (centerZone) {
+  centerZone.addEventListener('click', (e) => {
+    if (document.body.classList.contains('pocket-mode') && e.target !== pocketExitBtn) {
+      handleTap(e);
+    }
+  });
+}
+
+// ── Sadhana History & Streaks Modal ──
+const historyOverlay = document.getElementById('history-modal-overlay');
+const btnStreak = document.getElementById('btn-streak');
+const btnCloseHist1 = document.getElementById('btn-close-history-modal');
+const btnCloseHist2 = document.getElementById('btn-close-history-modal-footer');
+const histStatStreak = document.getElementById('history-stat-streak');
+const histStatBest = document.getElementById('history-stat-best');
+const histListContainer = document.getElementById('history-list-container');
+
+function openHistoryModal() {
+  if (histStatStreak) histStatStreak.textContent = (state.streak || 0) + ' Days';
+  if (histStatBest) histStatBest.textContent = Math.max(state.best || 0, state.today || 0).toLocaleString();
+  
+  if (histListContainer) {
+    histListContainer.innerHTML = '';
+    const entries = Object.entries(state.history || {}).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    if (entries.length === 0) {
+      histListContainer.innerHTML = '<div class="history-empty">Start chanting today to record your devotional history 🙏</div>';
+    } else {
+      for (const [dateStr, cnt] of entries.slice(0, 14)) {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        const malas = Math.floor(cnt / 108);
+        row.innerHTML = `
+          <div class="history-item-date">${dateStr}</div>
+          <div class="history-item-count">${cnt.toLocaleString()} <span style="font-size:11px;color:var(--muted);font-weight:normal;">(${malas} M)</span></div>
+        `;
+        histListContainer.appendChild(row);
+      }
+    }
+  }
+  historyOverlay.classList.add('open');
+}
+
+function closeHistoryModal() {
+  historyOverlay.classList.remove('open');
+}
+
+if (btnStreak) btnStreak.addEventListener('click', openHistoryModal);
+if (btnCloseHist1) btnCloseHist1.addEventListener('click', closeHistoryModal);
+if (btnCloseHist2) btnCloseHist2.addEventListener('click', closeHistoryModal);
+if (historyOverlay) historyOverlay.addEventListener('click', (e) => {
+  if (e.target === historyOverlay) closeHistoryModal();
 });
 
 // ── Reset session ─────────────────────────────────────────────
@@ -1079,8 +1441,19 @@ async function onUserSignedIn(user) {
         restoreFromCloudData(cloudCachedData);
         window.showAppToast(`✨ Restored ${cloudTotal.toLocaleString()} chants from Cloud!`);
       }
+      // Merge history and streak across devices
+      if (cloudCachedData.history && typeof cloudCachedData.history === 'object') {
+        if (!window.appState.history) window.appState.history = {};
+        for (const [dKey, val] of Object.entries(cloudCachedData.history)) {
+          window.appState.history[dKey] = Math.max(window.appState.history[dKey] || 0, val);
+        }
+      }
+      if (cloudCachedData.streak) {
+        window.appState.streak = Math.max(window.appState.streak || 0, cloudCachedData.streak);
+      }
+
       // Case B: Local is ahead (user chanted offline while logged out)
-      else if (window.appState.total > cloudTotal) {
+      if (window.appState.total > cloudTotal) {
         isDirty = true;
         await performCloudSync();
         window.showAppToast('☁️ Offline chants synced to Cloud!');
@@ -1120,6 +1493,16 @@ function restoreFromCloudData(data) {
   }
   if (data.goal) window.appState.goal = data.goal;
 
+  if (data.history && typeof data.history === 'object') {
+    if (!window.appState.history) window.appState.history = {};
+    for (const [dKey, val] of Object.entries(data.history)) {
+      window.appState.history[dKey] = Math.max(window.appState.history[dKey] || 0, val);
+    }
+  }
+  if (data.streak) {
+    window.appState.streak = Math.max(window.appState.streak || 0, data.streak);
+  }
+
   localStorage.setItem('ram_state', JSON.stringify(window.appState));
   lastSyncedTotal = window.appState.total;
   isDirty = false;
@@ -1148,6 +1531,8 @@ async function performCloudSync() {
       todayDate: window.appState.todayDate,
       best: window.appState.best,
       goal: window.appState.goal,
+      streak: window.appState.streak || 0,
+      history: window.appState.history || {},
       lastSyncedAt: Date.now(),
       email: currentUser.email || '',
       displayName: currentUser.displayName || ''

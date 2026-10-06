@@ -3,7 +3,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Each user can only read and write their own document in the 'users' collection
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.total is int
+        && request.resource.data.total >= 0
+        && (!('session' in request.resource.data) || request.resource.data.session is int)
+        && (!('today' in request.resource.data) || request.resource.data.today is int)
+        && (!('goal' in request.resource.data) || request.resource.data.goal is int);
     }
   }
 }
+
