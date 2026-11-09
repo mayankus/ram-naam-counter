@@ -77,13 +77,16 @@
   .sync-badge {
     background: var(--bg2); border: 1px solid rgba(245, 166, 35, 0.25);
     color: var(--ivory); border-radius: 20px;
-    padding: 4px 10px; font-size: 11px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    padding: 5px 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
     transition: all .2s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .sync-badge:hover {
     background: var(--bg3); border-color: var(--marigold);
+  }
+  .sync-badge #sync-label {
+    display: none;
   }
   .sync-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -742,14 +745,19 @@
         <span id="streak-badge-count">0</span>
       </button>
 
-      <!-- Pocket / Night Mode Toggle -->
-      <button id="btn-pocket" class="icon-btn" aria-label="Toggle Pocket/Night Mode" title="Pocket / Night Mode (OLED Black, Tap anywhere)">🌙</button>
+      <!-- Pocket Mode Toggle -->
+      <button id="btn-pocket" class="icon-btn" aria-label="Toggle Pocket Mode" title="Pocket Mode (OLED Black, Tap anywhere to chant)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:block;">
+          <path d="M4 4h16v7a8 8 0 0 1-16 0V4z"/>
+          <rect x="8" y="1" width="8" height="6" rx="1.5" fill="currentColor" fill-opacity="0.25"/>
+        </svg>
+      </button>
 
-      <!-- Cloud Sync & Backup Button -->
+      <!-- Cloud Sync & Backup Button (Compact Icon + Status Dot) -->
       <button id="btn-cloud-sync" class="sync-badge" aria-label="Cloud Sync" title="Cloud Backup & Sync">
         <span id="sync-icon">☁️</span>
-        <span id="sync-label">Backup</span>
         <span id="sync-status-dot" class="sync-dot"></span>
+        <span id="sync-label" style="display:none;">Backup</span>
       </button>
 
       <button id="btn-install" class="hidden" title="Install Ram Naam Counter" style="
@@ -1485,7 +1493,7 @@ function togglePocketMode(enable) {
   const isPocket = (enable !== undefined) ? enable : !document.body.classList.contains('pocket-mode');
   if (isPocket) {
     document.body.classList.add('pocket-mode');
-    showToast('🌙 Pocket Mode active · Tap anywhere to chant');
+    showToast('📱 Pocket Mode active · Tap anywhere to chant');
   } else {
     document.body.classList.remove('pocket-mode');
   }
