@@ -2,7 +2,7 @@
   "id": "ram-naam-counter",
   "name": "Ram Naam Counter – Digital Mala",
   "short_name": "Ram Naam",
-  "description": "Digital mala counter for chanting Ram Naam with full offline support, milestone tracking, and sacred sounds",
+  "description": "Digital mala counter for sacred Japa (Ram, Radha, Shiv, Shakti) with full offline support, milestone tracking, and cloud backup",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

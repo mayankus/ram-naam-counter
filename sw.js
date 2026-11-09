@@ -1,12 +1,11 @@
-// Ram Naam Counter Service Worker (v6)
-const CACHE_NAME = 'ram-naam-v6';
+// Ram Naam Counter Service Worker (v7)
+const CACHE_NAME = 'ram-naam-v7';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './firebase-config.js',
-  './ram.mp3',
   './icon-192.png',
   './icon-512.png',
   './favicon.svg'
@@ -46,44 +45,6 @@ self.addEventListener('activate', event => {
   );
   self.clients.claim();
 });
-
-// Helper for HTTP Range requests (crucial for iOS Safari cached audio playback)
-async function handleAudioRange(request, cachedResponse) {
-  const rangeHeader = request.headers.get('range');
-  if (!rangeHeader) return cachedResponse;
-
-  try {
-    const arrayBuffer = await cachedResponse.arrayBuffer();
-    const bytes = /^bytes=(\d+)-(\d+)?$/i.exec(rangeHeader);
-    if (!bytes) return cachedResponse;
-
-    const total = arrayBuffer.byteLength;
-    const start = parseInt(bytes[1], 10);
-    const end = bytes[2] ? parseInt(bytes[2], 10) : total - 1;
-
-    if (start >= total || end >= total) {
-      return new Response(null, {
-        status: 416,
-        statusText: 'Range Not Satisfiable',
-        headers: { 'Content-Range': `bytes */${total}` }
-      });
-    }
-
-    const sliced = arrayBuffer.slice(start, end + 1);
-    const headers = new Headers(cachedResponse.headers);
-    headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
-    headers.set('Content-Length', `${sliced.byteLength}`);
-    headers.set('Accept-Ranges', 'bytes');
-
-    return new Response(sliced, {
-      status: 206,
-      statusText: 'Partial Content',
-      headers
-    });
-  } catch (err) {
-    return cachedResponse;
-  }
-}
 
 // Fetch: Cache-first with network fallback and offline navigation support
 self.addEventListener('fetch', event => {
@@ -128,14 +89,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Handle static assets (audio, icons, manifest, html, scripts)
+  // Handle static assets (icons, manifest, html, scripts)
   event.respondWith(
     caches.match(request, { ignoreSearch: true }).then(async cached => {
       if (cached) {
-        // If range header requested (common for Safari audio)
-        if (request.headers.has('range')) {
-          return handleAudioRange(request, cached);
-        }
         return cached;
       }
 
@@ -148,14 +105,6 @@ self.addEventListener('fetch', event => {
         }
         return response;
       } catch (err) {
-        // If network failed and it's an audio or image, see if we have alternate match
-        if (request.url.endsWith('.mp3')) {
-          const fallbackAudio = await caches.match('./ram.mp3');
-          if (fallbackAudio) {
-            if (request.headers.has('range')) return handleAudioRange(request, fallbackAudio);
-            return fallbackAudio;
-          }
-        }
         throw err;
       }
     })

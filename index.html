@@ -545,14 +545,196 @@
   body.pocket-mode #pocket-exit-btn {
     display: block;
   }
+
+  /* ── Deity Accent Themes ── */
+  body[data-chant="ram"] {
+    --chant-color: #f5a623;
+    --chant-glow: rgba(245, 166, 35, 0.4);
+    --marigold: #f5a623;
+  }
+  body[data-chant="radha"] {
+    --chant-color: #ff4d79;
+    --chant-glow: rgba(255, 77, 121, 0.4);
+    --marigold: #ff4d79;
+  }
+  body[data-chant="shiv"] {
+    --chant-color: #40a9ff;
+    --chant-glow: rgba(64, 169, 255, 0.4);
+    --marigold: #40a9ff;
+  }
+  body[data-chant="shakti"] {
+    --chant-color: #ff4d4f;
+    --chant-glow: rgba(255, 77, 79, 0.4);
+    --marigold: #ff4d4f;
+  }
+
+  /* ── Chant Selector Header Badge ── */
+  .chant-badge {
+    background: var(--bg2); border: 1.5px solid rgba(245, 166, 35, 0.35);
+    color: var(--marigold); border-radius: 20px;
+    padding: 5px 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: all .2s ease;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 0 10px rgba(245, 166, 35, 0.12);
+  }
+  .chant-badge:hover {
+    background: var(--bg3); border-color: var(--marigold);
+    box-shadow: 0 0 16px rgba(245, 166, 35, 0.28);
+  }
+  .chant-badge-arrow {
+    font-size: 10px; opacity: 0.7; transform: translateY(-1px);
+  }
+
+  /* ── Landing Page (Chant Selection on Open) ── */
+  .landing-screen {
+    position: fixed; inset: 0; z-index: 200;
+    background: radial-gradient(circle at 50% 15%, #2d1300 0%, #150600 70%, #0d0300 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    transition: opacity .35s ease, transform .35s ease, visibility .35s;
+  }
+  .landing-screen.hidden {
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transform: scale(0.98);
+  }
+  .landing-container {
+    width: 100%; max-width: 410px;
+    display: flex; flex-direction: column; gap: 20px;
+    margin: auto 0;
+  }
+  .landing-hero {
+    text-align: center;
+  }
+  .landing-om {
+    font-size: 38px; line-height: 1; margin-bottom: 8px;
+    filter: drop-shadow(0 0 16px rgba(245, 166, 35, 0.5));
+    animation: gentle-glow 3s infinite alternate ease-in-out;
+  }
+  @keyframes gentle-glow {
+    from { filter: drop-shadow(0 0 10px rgba(245, 166, 35, 0.3)); transform: scale(1); }
+    to { filter: drop-shadow(0 0 22px rgba(245, 166, 35, 0.7)); transform: scale(1.04); }
+  }
+  .landing-title {
+    font-family: var(--font-sanskrit);
+    font-size: 32px; font-weight: 700; color: var(--ivory);
+    margin-bottom: 2px; letter-spacing: 0.02em;
+    text-shadow: 0 0 20px rgba(245, 166, 35, 0.4);
+  }
+  .landing-sub-en {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--marigold); margin-bottom: 8px;
+  }
+  .landing-desc {
+    font-size: 13px; color: var(--muted); line-height: 1.45;
+  }
+  .chant-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .chant-card {
+    background: rgba(43, 18, 0, 0.75);
+    border: 1.5px solid rgba(245, 166, 35, 0.18);
+    border-radius: 18px; padding: 18px 12px 14px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    cursor: pointer; position: relative; transition: all .2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(8px);
+  }
+  .chant-card:hover {
+    background: rgba(61, 28, 0, 0.9);
+    border-color: rgba(245, 166, 35, 0.5);
+    transform: translateY(-2px);
+  }
+  .chant-card:active {
+    transform: scale(0.97);
+  }
+  .chant-card.selected {
+    border-color: var(--card-color, var(--marigold));
+    background: radial-gradient(circle at 50% 30%, rgba(61, 28, 0, 0.95) 0%, rgba(30, 10, 0, 0.95) 100%);
+    box-shadow: 0 0 22px var(--card-glow, rgba(245, 166, 35, 0.35)), inset 0 0 12px rgba(245, 166, 35, 0.15);
+    transform: translateY(-2px);
+  }
+  .chant-card-icon {
+    font-size: 26px; line-height: 1; margin-bottom: 6px;
+  }
+  .chant-card-script {
+    font-family: var(--font-sanskrit);
+    font-size: 32px; font-weight: 700; line-height: 1.1;
+    color: var(--card-color, var(--marigold));
+    text-shadow: 0 0 14px var(--card-glow, rgba(245, 166, 35, 0.35));
+    margin-bottom: 4px;
+  }
+  .chant-card-name {
+    font-size: 14px; font-weight: 700; color: var(--ivory);
+    margin-bottom: 3px;
+  }
+  .chant-card-sub {
+    font-size: 10px; color: var(--muted); line-height: 1.3;
+  }
+  .chant-card-check {
+    position: absolute; top: 8px; right: 8px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--card-color, var(--marigold));
+    color: #1a0a00; font-size: 11px; font-weight: 900;
+    display: none; align-items: center; justify-content: center;
+  }
+  .chant-card.selected .chant-card-check {
+    display: flex;
+  }
+  .btn-start-chanting {
+    width: 100%; padding: 15px 20px;
+    background: linear-gradient(135deg, #d4380d 0%, var(--marigold) 100%);
+    color: #ffffff; border: none; border-radius: 16px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(212, 56, 13, 0.45);
+    transition: transform .15s, opacity .15s;
+    letter-spacing: .02em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-start-chanting:active {
+    transform: scale(0.98); opacity: 0.9;
+  }
+  .landing-footer-note {
+    font-size: 11px; color: var(--muted); text-align: center;
+    margin-top: -6px;
+  }
 </style>
 </head>
-<body>
+<body data-chant="ram">
+
+<!-- ── Sacred Chant Selection Landing Screen ── -->
+<div id="landing-screen" class="landing-screen">
+  <div class="landing-container">
+    <div class="landing-hero">
+      <div class="landing-om">🕉️</div>
+      <h1 class="landing-title">दिव्य नाम जप</h1>
+      <div class="landing-sub-en">Digital Mala Counter</div>
+      <p class="landing-desc">Select your sacred chant to begin your devotional practice</p>
+    </div>
+
+    <div class="chant-grid" id="landing-chant-grid">
+      <!-- Generated dynamically -->
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+      <button id="btn-landing-start" class="btn-start-chanting">
+        Begin Chanting <span id="landing-selected-label">Ram Naam</span> →
+      </button>
+      <div class="landing-footer-note">You can change your chant anytime while chanting</div>
+    </div>
+  </div>
+</div>
+
 <div id="app">
 
   <!-- Header -->
   <header>
-    <div class="app-title">🪔 Ram Naam</div>
+    <button id="btn-change-chant" class="chant-badge" aria-label="Change sacred chant" title="Change Sacred Chant (Ram, Radha, Shiv, Shakti)">
+      <span id="header-chant-icon">🏹</span>
+      <span id="header-chant-name">Ram</span>
+      <span class="chant-badge-arrow">▾</span>
+    </button>
     <div class="header-actions">
       <!-- Sadhana Streak Badge -->
       <button id="btn-streak" class="streak-badge" aria-label="Sadhana Streak" title="Sadhana Streak & History">
@@ -580,11 +762,6 @@
         padding:5px 10px;font-size:16px;cursor:pointer;line-height:1;
         -webkit-tap-highlight-color:transparent;
       ">📳</button>
-      <button id="btn-sound" aria-label="Toggle sound" style="
-        background:var(--bg2);border:none;border-radius:20px;
-        padding:5px 10px;font-size:16px;cursor:pointer;line-height:1;
-        -webkit-tap-highlight-color:transparent;
-      ">🔊</button>
       <div class="session-badge" id="session-time">0m</div>
     </div>
   </header>
@@ -609,7 +786,7 @@
         <circle id="ring-fill"  cx="150" cy="150" r="130"/>
       </svg>
       <button id="tap-btn" aria-label="Tap to count Ram Naam">
-        <div class="mantra-text">राम</div>
+        <div class="mantra-text" id="mantra-text">राम</div>
         <div class="tap-hint">Tap to chant</div>
       </button>
     </div>
@@ -664,6 +841,23 @@
       <button id="btn-set-goal">Set</button>
     </div>
     <button id="btn-close-modal" class="btn-modal-close">Cancel</button>
+  </div>
+</div>
+
+<!-- Chant Switcher Modal -->
+<div id="chant-modal-overlay" class="modal-overlay">
+  <div id="chant-modal" class="modal-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>🪔 Choose Sacred Chant</h2>
+      <button id="btn-close-chant-modal" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">✕</button>
+    </div>
+    <p class="modal-sub">Switch your devotional focus. Your all-time sadhana counts remain safely preserved.</p>
+
+    <div class="chant-grid" id="modal-chant-grid">
+      <!-- 4 Cards dynamically rendered -->
+    </div>
+
+    <button id="btn-close-chant-modal-footer" class="btn-modal-close">Close</button>
   </div>
 </div>
 
@@ -776,6 +970,62 @@
 </div>
 
 <script>
+// ── Sacred Chants Configuration ──────────────────────────────
+const CHANTS = {
+  ram: {
+    id: 'ram',
+    name: 'Ram',
+    devanagari: 'राम',
+    label: 'Ram Naam',
+    title: 'Shri Ram',
+    sub: 'Maryada Purushottam',
+    salutation: 'Jai SiyaRam 🙏',
+    icon: '🏹',
+    color: '#f5a623',
+    glow: 'rgba(245, 166, 35, 0.4)',
+    baseHue: 36
+  },
+  radha: {
+    id: 'radha',
+    name: 'Radha',
+    devanagari: 'राधा',
+    label: 'Radha Naam',
+    title: 'Shri Radha',
+    sub: 'Vrindavan Prema Rasamayi',
+    salutation: 'Radhe Radhe 🙏',
+    icon: '🪷',
+    color: '#ff4d79',
+    glow: 'rgba(255, 77, 121, 0.4)',
+    baseHue: 340
+  },
+  shiv: {
+    id: 'shiv',
+    name: 'Shiv',
+    devanagari: 'शिव',
+    label: 'Shiv Naam',
+    title: 'Mahadev Shiv',
+    sub: 'Devadhidev Bholenath',
+    salutation: 'Har Har Mahadev 🔱',
+    icon: '🔱',
+    color: '#40a9ff',
+    glow: 'rgba(64, 169, 255, 0.4)',
+    baseHue: 205
+  },
+  shakti: {
+    id: 'shakti',
+    name: 'Shakti',
+    devanagari: 'शक्ति',
+    label: 'Shakti Naam',
+    title: 'Adi Shakti',
+    sub: 'Ma Durga Bhavani',
+    salutation: 'Jai Mata Di 🌺',
+    icon: '🌺',
+    color: '#ff4d4f',
+    glow: 'rgba(255, 77, 79, 0.4)',
+    baseHue: 5
+  }
+};
+
 // ── State & Storage Persistence ──────────────────────────────
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then(persistent => {
@@ -785,6 +1035,7 @@ if (navigator.storage && navigator.storage.persist) {
 
 const TODAY = new Date().toDateString();
 let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
+  chant: 'ram',
   session: 0,
   todayDate: TODAY,
   today: 0,
@@ -800,6 +1051,7 @@ let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
 };
 
 // Backward compatibility check
+if (!state.chant || !CHANTS[state.chant]) state.chant = 'ram';
 if (!state.history) state.history = {};
 if (state.goalReachedToday === undefined) state.goalReachedToday = false;
 if (state.streak === undefined) state.streak = 0;
@@ -859,8 +1111,13 @@ function updateRing() {
   const bead = state.session % 108;
   const frac = bead / 108;
   ringFill.style.strokeDashoffset = CIRCUM * (1 - frac);
-  const hue = Math.round(36 - frac * 20); // 36°→16°
-  ringFill.style.stroke = `hsl(${hue},91%,55%)`;
+  const curChant = CHANTS[state.chant] || CHANTS.ram;
+  if (curChant.baseHue !== undefined) {
+    const hue = Math.round(curChant.baseHue - frac * 15);
+    ringFill.style.stroke = `hsl(${hue},91%,55%)`;
+  } else {
+    ringFill.style.stroke = curChant.color;
+  }
 }
 
 // ── Smooth Per-Digit Counter Engine ──────────────────────────
@@ -936,7 +1193,8 @@ function updateUI() {
     labelSuffix = ' (Session)';
   }
 
-  if (countLabel) countLabel.textContent = `Ram Naam${labelSuffix}`;
+  const curChant = CHANTS[state.chant] || CHANTS.ram;
+  if (countLabel) countLabel.textContent = `${curChant.label}${labelSuffix}`;
   renderSmoothCounter(countNum, displayedVal);
 
   const malas = Math.floor(state.session / 108);
@@ -989,16 +1247,18 @@ setInterval(() => {
 const shownMilestones = new Set();
 
 function checkMilestone(sessionCount) {
+  const curChant = CHANTS[state.chant] || CHANTS.ram;
+
   // Mala completion: every 108 in this session
   if (sessionCount > 0 && sessionCount % 108 === 0) {
     const malaNum = Math.floor(sessionCount / 108);
-    const key = 'mala_' + malaNum;
+    const key = state.chant + '_mala_' + malaNum;
     if (!shownMilestones.has(key)) {
       shownMilestones.add(key);
       if (malaNum === 1) {
-        showToast('🙏 108 Ram Naam! 1 Mala complete');
+        showToast(`🙏 108 ${curChant.label}! 1 Mala complete · ${curChant.salutation}`);
       } else {
-        showToast(`🔱 Mala ${malaNum} complete (${sessionCount.toLocaleString()} Ram Naam)! Jai SiyaRam!`);
+        showToast(`🔱 Mala ${malaNum} complete (${sessionCount.toLocaleString()} ${curChant.label})! ${curChant.salutation}`);
       }
     }
   }
@@ -1006,7 +1266,7 @@ function checkMilestone(sessionCount) {
   // Daily goal completion: checks today's cumulative progress!
   if (state.today >= state.goal && !state.goalReachedToday) {
     state.goalReachedToday = true;
-    showToast(`✨ Daily goal of ${state.goal.toLocaleString()} reached! Jai SiyaRam! 🎯`);
+    showToast(`✨ Daily goal of ${state.goal.toLocaleString()} ${curChant.label} reached! ${curChant.salutation} 🎯`);
     save();
   }
 }
@@ -1048,77 +1308,125 @@ btnVibrate.addEventListener('click', () => {
   if (vibrateOn && navigator.vibrate) navigator.vibrate(30);
 });
 
-// ── Audio / Sound Engine ──────────────────────────────────────
-let soundOn = JSON.parse(localStorage.getItem('ram_sound') ?? 'true');
-const btnSound = document.getElementById('btn-sound');
+// ── Chant Management & Selection Engine ──────────────────────
+let selectedLandingChant = state.chant || 'ram';
 
-let audioCtx = null;
-let ramBuffer = null;
-const ramAudioFallback = new Audio('./ram.mp3');
-ramAudioFallback.preload = 'auto';
+function renderChantCards(containerId, isLanding = false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
 
-function initAudio() {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass && !audioCtx) {
-      audioCtx = new AudioContextClass();
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(() => {});
-    }
-  } catch (e) {}
+  const activeId = isLanding ? selectedLandingChant : state.chant;
+
+  Object.values(CHANTS).forEach(chant => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `chant-card ${chant.id === activeId ? 'selected' : ''}`;
+    card.dataset.chant = chant.id;
+    card.style.setProperty('--card-color', chant.color);
+    card.style.setProperty('--card-glow', chant.glow);
+
+    card.innerHTML = `
+      <div class="chant-card-check">✓</div>
+      <div class="chant-card-icon">${chant.icon}</div>
+      <div class="chant-card-script">${chant.devanagari}</div>
+      <div class="chant-card-name">${chant.title}</div>
+      <div class="chant-card-sub">${chant.sub}</div>
+    `;
+
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isLanding) {
+        selectedLandingChant = chant.id;
+        renderChantCards('landing-chant-grid', true);
+        const lbl = document.getElementById('landing-selected-label');
+        if (lbl) lbl.textContent = `${chant.label}`;
+      } else {
+        selectChant(chant.id, true);
+      }
+    });
+
+    container.appendChild(card);
+  });
 }
 
-fetch('./ram.mp3')
-  .then(res => res.arrayBuffer())
-  .then(arrayBuffer => {
-    initAudio();
-    if (audioCtx) {
-      audioCtx.decodeAudioData(arrayBuffer, buffer => {
-        ramBuffer = buffer;
-      }, () => {});
-    }
-  })
-  .catch(() => {});
+function selectChant(chantKey, fromModal = false) {
+  if (!CHANTS[chantKey]) return;
+  state.chant = chantKey;
+  save();
+  updateChantUI();
+  updateUI();
 
-function updateSoundBtn() {
-  btnSound.textContent = soundOn ? '🔊' : '🔇';
-  btnSound.title = soundOn ? 'Sound ON – tap to mute' : 'Sound OFF – tap to unmute';
-}
-updateSoundBtn();
-
-btnSound.addEventListener('click', () => {
-  soundOn = !soundOn;
-  localStorage.setItem('ram_sound', soundOn);
-  updateSoundBtn();
-  initAudio();
-});
-
-function playRam() {
-  if (!soundOn) return;
-  initAudio();
-  if (audioCtx && ramBuffer) {
-    try {
-      const source = audioCtx.createBufferSource();
-      source.buffer = ramBuffer;
-      source.connect(audioCtx.destination);
-      source.start(0);
-      return;
-    } catch (e) {}
+  if (fromModal) {
+    const modal = document.getElementById('chant-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    showToast(`✨ Switched to ${CHANTS[chantKey].name} Naam · ${CHANTS[chantKey].salutation}`);
+    if (window.onStateUpdated) window.onStateUpdated();
+  } else {
+    const landing = document.getElementById('landing-screen');
+    if (landing) landing.classList.add('hidden');
+    showToast(`✨ Chanting ${CHANTS[chantKey].name} Naam · ${CHANTS[chantKey].salutation}`);
   }
-  try {
-    const clip = ramAudioFallback.cloneNode();
-    clip.volume = 1;
-    clip.play().catch(() => {});
-  } catch (e) {}
+}
+
+function updateChantUI() {
+  const curChant = CHANTS[state.chant] || CHANTS.ram;
+  document.body.setAttribute('data-chant', curChant.id);
+
+  const mantraTextEl = document.getElementById('mantra-text');
+  if (mantraTextEl) mantraTextEl.textContent = curChant.devanagari;
+
+  const headerName = document.getElementById('header-chant-name');
+  if (headerName) headerName.textContent = curChant.name;
+
+  const headerIcon = document.getElementById('header-chant-icon');
+  if (headerIcon) headerIcon.textContent = curChant.icon;
+
+  const landingLabel = document.getElementById('landing-selected-label');
+  if (landingLabel) landingLabel.textContent = curChant.label;
+
+  document.title = `${curChant.name} Naam Counter – Digital Mala`;
+
+  updateRing();
+  renderChantCards('landing-chant-grid', true);
+  renderChantCards('modal-chant-grid', false);
+}
+window.updateChantUI = updateChantUI;
+
+// Landing screen start button
+const btnLandingStart = document.getElementById('btn-landing-start');
+if (btnLandingStart) {
+  btnLandingStart.addEventListener('click', () => {
+    selectChant(selectedLandingChant, false);
+  });
+}
+
+// Chant Switcher Modal triggers
+const chantModalOverlay = document.getElementById('chant-modal-overlay');
+const btnChangeChant = document.getElementById('btn-change-chant');
+const btnCloseChant1 = document.getElementById('btn-close-chant-modal');
+const btnCloseChant2 = document.getElementById('btn-close-chant-modal-footer');
+
+function openChantModal() {
+  renderChantCards('modal-chant-grid', false);
+  chantModalOverlay.classList.add('open');
+}
+function closeChantModal() {
+  chantModalOverlay.classList.remove('open');
+}
+
+if (btnChangeChant) btnChangeChant.addEventListener('click', openChantModal);
+if (btnCloseChant1) btnCloseChant1.addEventListener('click', closeChantModal);
+if (btnCloseChant2) btnCloseChant2.addEventListener('click', closeChantModal);
+if (chantModalOverlay) {
+  chantModalOverlay.addEventListener('click', e => {
+    if (e.target === chantModalOverlay) closeChantModal();
+  });
 }
 
 // ── Tap handler ───────────────────────────────────────────────
 function handleTap(e) {
   if (vibrateOn && navigator.vibrate) navigator.vibrate(18);
-
-  initAudio();
-  playRam();
 
   state.session++;
   state.today++;
@@ -1152,7 +1460,6 @@ tapBtn.addEventListener('click', handleTap);
 document.addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'Enter') {
     e.preventDefault();
-    initAudio();
     handleTap();
   }
 });
@@ -1350,6 +1657,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+updateChantUI();
 updateUI();
 </script>
 
@@ -1532,6 +1840,10 @@ function restoreFromCloudData(data) {
     window.appState.session = 0;
   }
   if (data.goal) window.appState.goal = data.goal;
+  if (data.chant && window.appState) {
+    window.appState.chant = data.chant;
+    if (window.updateChantUI) window.updateChantUI();
+  }
 
   if (data.history && typeof data.history === 'object') {
     if (!window.appState.history) window.appState.history = {};
@@ -1571,6 +1883,7 @@ async function performCloudSync() {
       todayDate: window.appState.todayDate,
       best: window.appState.best,
       goal: window.appState.goal,
+      chant: window.appState.chant || 'ram',
       streak: window.appState.streak || 0,
       history: window.appState.history || {},
       lastSyncedAt: Date.now(),
