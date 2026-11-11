@@ -1,5 +1,5 @@
-// Ram Naam Counter Service Worker (v8)
-const CACHE_NAME = 'ram-naam-v8';
+// Ram Naam Counter Service Worker (v9)
+const CACHE_NAME = 'ram-naam-v9';
 
 const CORE_ASSETS = [
   './',

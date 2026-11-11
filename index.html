@@ -707,7 +707,7 @@
 <body data-chant="ram">
 
 <!-- ── Sacred Chant Selection Landing Screen ── -->
-<div id="landing-screen" class="landing-screen">
+<div id="landing-screen" class="landing-screen hidden">
   <div class="landing-container">
     <div class="landing-hero">
       <div class="landing-om">🕉️</div>
@@ -864,6 +864,8 @@
     <div class="chant-grid" id="modal-chant-grid">
       <!-- 4 Cards dynamically rendered -->
     </div>
+
+    <button id="btn-reopen-landing" style="background:none;border:none;color:var(--muted);font-size:12px;margin:14px auto 2px;display:block;cursor:pointer;text-decoration:underline;">Show Welcome Screen</button>
 
     <button id="btn-close-chant-modal-footer" class="btn-modal-close">Close</button>
   </div>
@@ -1044,6 +1046,7 @@ if (navigator.storage && navigator.storage.persist) {
 const TODAY = new Date().toDateString();
 let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
   chant: 'ram',
+  hasSelectedChant: false,
   session: 0,
   todayDate: TODAY,
   today: 0,
@@ -1060,6 +1063,9 @@ let state = JSON.parse(localStorage.getItem('ram_state') || 'null') || {
 
 // Backward compatibility check
 if (!state.chant || !CHANTS[state.chant]) state.chant = 'ram';
+if (state.hasSelectedChant === undefined) {
+  state.hasSelectedChant = Boolean((state.total && state.total > 0) || localStorage.getItem('ram_has_selected_chant') === 'true');
+}
 if (!state.history) state.history = {};
 if (state.goalReachedToday === undefined) state.goalReachedToday = false;
 if (state.streak === undefined) state.streak = 0;
@@ -1361,6 +1367,8 @@ function renderChantCards(containerId, isLanding = false) {
 function selectChant(chantKey, fromModal = false) {
   if (!CHANTS[chantKey]) return;
   state.chant = chantKey;
+  state.hasSelectedChant = true;
+  localStorage.setItem('ram_has_selected_chant', 'true');
   save();
   updateChantUI();
   updateUI();
@@ -1430,6 +1438,28 @@ if (chantModalOverlay) {
   chantModalOverlay.addEventListener('click', e => {
     if (e.target === chantModalOverlay) closeChantModal();
   });
+}
+
+// Reopen Welcome/Landing Screen from modal if user wants to see it
+const btnReopenLanding = document.getElementById('btn-reopen-landing');
+if (btnReopenLanding) {
+  btnReopenLanding.addEventListener('click', () => {
+    closeChantModal();
+    const landing = document.getElementById('landing-screen');
+    if (landing) landing.classList.remove('hidden');
+  });
+}
+
+// Onboarding: Only display landing screen for first-time visitors who have not yet selected a chant
+const hasCompletedOnboarding = Boolean(
+  localStorage.getItem('ram_has_selected_chant') === 'true' ||
+  state.hasSelectedChant ||
+  (state.total && state.total > 0)
+);
+
+if (!hasCompletedOnboarding) {
+  const landing = document.getElementById('landing-screen');
+  if (landing) landing.classList.remove('hidden');
 }
 
 // ── Tap handler ───────────────────────────────────────────────
@@ -1850,6 +1880,8 @@ function restoreFromCloudData(data) {
   if (data.goal) window.appState.goal = data.goal;
   if (data.chant && window.appState) {
     window.appState.chant = data.chant;
+    window.appState.hasSelectedChant = true;
+    localStorage.setItem('ram_has_selected_chant', 'true');
     if (window.updateChantUI) window.updateChantUI();
   }
 
